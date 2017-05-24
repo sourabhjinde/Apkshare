@@ -63,7 +63,7 @@
             android:layout_gravity="center"
             android:layout_weight="3"
             android:contentDescription="Send"
-            android:src="@android:drawable/ic_menu_send"
+            android:src="@mipmap/ic_send"
             android:text="send"
             android:background="?attr/selectableItemBackground"/>
 
@@ -73,11 +73,11 @@
             android:layout_height="match_parent"
             android:layout_gravity="center"
             android:layout_weight="5"
+            android:background="?attr/selectableItemBackground"
             android:padding="10dp"
-            android:textColor="@color/colorWhite"
-            android:textSize="18sp"
             android:text="Backup"
-            android:background="?attr/selectableItemBackground"/>
+            android:textColor="@color/colorWhite"
+            android:textSize="18sp" />
 
         <ImageButton
             android:id="@+id/tick"
@@ -85,7 +85,7 @@
             android:layout_height="match_parent"
             android:layout_gravity="center"
             android:layout_weight="3"
-            android:src="@android:drawable/checkbox_on_background"
+            android:src="@mipmap/ic_done"
             android:background="?attr/selectableItemBackground"/>
     </LinearLayout>
 </RelativeLayout>
