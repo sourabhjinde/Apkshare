@@ -23,7 +23,7 @@ import java.util.List;
 public class RecycleViewAdapter extends RecyclerView.Adapter<RecycleViewAdapter.ViewHolder> implements Filterable {
     private List<AppInfo> mAppList;
     private List<AppInfo> mFilteredAppList;
-    private List<AppInfo> mCheckedAppList = new ArrayList<>() ;
+
 
 
 
@@ -86,15 +86,17 @@ public class RecycleViewAdapter extends RecyclerView.Adapter<RecycleViewAdapter.
                 //set your object's last status
                 appInfo.setSelected(isChecked);
                 if(holder.isChecked.isChecked()){
-                       mCheckedAppList.add(appInfo);
+                      // mCheckedAppList.add(appInfo);
                 }
                 else {
-                       mCheckedAppList.remove(appInfo);
+                     //  mCheckedAppList.remove(appInfo);
                 }
             }
         });
 
+
     }
+
 
     @Override
     public int getItemCount() {
@@ -143,6 +145,12 @@ public class RecycleViewAdapter extends RecyclerView.Adapter<RecycleViewAdapter.
 
     public List<AppInfo> getmCheckedAppList()
     {
+       List<AppInfo> mCheckedAppList = new ArrayList<>() ;
+        for(AppInfo app : mFilteredAppList) {
+            if(app.isSelected())
+                mCheckedAppList.add(app);
+        }
+
         return mCheckedAppList;
     }
 

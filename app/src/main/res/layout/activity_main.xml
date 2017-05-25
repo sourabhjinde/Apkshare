@@ -80,7 +80,7 @@
             android:textSize="18sp" />
 
         <ImageButton
-            android:id="@+id/tick"
+            android:id="@+id/check"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_gravity="center"

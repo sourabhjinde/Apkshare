@@ -3,11 +3,14 @@ package com.apptech.android.apkshare;
 
 import android.annotation.TargetApi;
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.annotation.Nullable;
@@ -16,6 +19,7 @@ import android.support.v4.view.MenuItemCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -31,6 +35,10 @@ import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
+
+import static android.app.Activity.RESULT_CANCELED;
+import static android.app.Activity.RESULT_FIRST_USER;
+import static android.app.Activity.RESULT_OK;
 
 /**
  * Created by S on 03/05/2017.
@@ -82,10 +90,13 @@ public class AppListFragment extends Fragment implements SearchView.OnQueryTextL
                 String appName = packInfo.applicationInfo.loadLabel(packageManager).toString();
                 Drawable appIcon = packInfo.applicationInfo.loadIcon(packageManager);
                 String version = packInfo.versionName;
+                String packageName = packInfo.packageName;
                 appInfo.setAppImage(appIcon);
                 appInfo.setAppName(appName);
                 appInfo.setAppVersion(version);
                 appInfo.setFilePath(filePath);
+                appInfo.setPackageName(packageName);
+                appInfo.setInstalled(true);
                 appslist.add(appInfo);
             }
         }
@@ -116,6 +127,54 @@ public class AppListFragment extends Fragment implements SearchView.OnQueryTextL
                         return true; // Return true to expand action view
                     }
                 });
+        final MenuItem delete = menu.findItem(R.id.delete);
+        delete.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                for(AppInfo appInfo: adapter.getmCheckedAppList()) {
+                    Intent intent;
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+                        intent = new Intent(Intent.ACTION_UNINSTALL_PACKAGE);
+                    } else {
+                        intent = new Intent(Intent.ACTION_DELETE);
+                    }
+                    intent.setData(Uri.parse("package:" + appInfo.getPackageName()));
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    intent.putExtra(Intent.EXTRA_RETURN_RESULT, true);
+                    startActivityForResult(intent, 1);
+
+                }
+                return false;
+            }
+        });
+
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 1) {
+            if (resultCode == RESULT_OK) {
+                Log.d("TAG", "onActivityResult: user accepted the (un)install");
+            } else if (resultCode == RESULT_CANCELED) {
+                Log.d("TAG", "onActivityResult: user canceled the (un)install");
+            } else if (resultCode == RESULT_FIRST_USER) {
+                Log.d("TAG", "onActivityResult: failed to (un)install");
+            }
+        }
+    }
+
+    public static String getAppLabel(PackageManager pm, String pathToApk) {
+        PackageInfo packageInfo = pm.getPackageArchiveInfo(pathToApk, 0);
+
+        if (Build.VERSION.SDK_INT >= 8) {
+            // those two lines do the magic:
+            packageInfo.applicationInfo.sourceDir = pathToApk;
+            packageInfo.applicationInfo.publicSourceDir = pathToApk;
+        }
+
+        CharSequence label = pm.getApplicationLabel(packageInfo.applicationInfo);
+        return label != null ? label.toString() : null;
     }
 
     @Override
@@ -131,10 +190,30 @@ public class AppListFragment extends Fragment implements SearchView.OnQueryTextL
 
     @Override
     public void onTextViewClick(View v) {
-        new AsyncTaskRunner().execute();
+        
+        int id = v.getId();
+        switch(id) {
+            case R.id.tvBackup : new ApkOperations(this.getActivity(),adapter.getmCheckedAppList()).execute();
+                           break;
+            case R.id.check :
+                             if(adapter.getmCheckedAppList().size() == appslist.size()) {
+                                 for (AppInfo app : appslist) {
+                                     app.setSelected(false);
+
+                                 }
+                             }else{
+                                 for (AppInfo app : appslist) {
+                                     app.setSelected(true);
+                                 }
+                             }
+                             adapter.notifyDataSetChanged();
+
+                           break;
+            default : break;
+        }
     }
 
-    public static void copyFile(File sourceFile, File destFile) throws IOException {
+   /* public static void copyFile(File sourceFile, File destFile) throws IOException {
         if (!destFile.getParentFile().exists())
             destFile.getParentFile().mkdirs();
 
@@ -159,7 +238,7 @@ public class AppListFragment extends Fragment implements SearchView.OnQueryTextL
         }
     }
 
-    private class AsyncTaskRunner extends AsyncTask<File, Integer, Void> {
+    private class ExtractApk extends AsyncTask<File, Integer, Void> {
 
         private String resp;
         ProgressDialog progressDialog;
@@ -215,5 +294,5 @@ public class AppListFragment extends Fragment implements SearchView.OnQueryTextL
             progressDialog.setProgress(val[0]);
 
         }
-    }
+    }*/
 }

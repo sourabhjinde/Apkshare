@@ -11,8 +11,10 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
@@ -24,6 +26,8 @@ public class MainActivity extends AppCompatActivity {
 
     ViewPager viewPager;
     Button tvBackup;
+    ImageButton check,tvSend;
+    PagerAdapter adapter;
     private static final int PERMISSION_REQUEST_CODE = 717;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
 
         viewPager = (ViewPager) findViewById(R.id.id_viewpager);
 
-        final PagerAdapter adapter = new PagerAdapter(getSupportFragmentManager());
+        adapter = new PagerAdapter(getSupportFragmentManager());
         final AppListFragment appListFragment = new AppListFragment();
         adapter.addFragment(appListFragment, "Installed");
       /*  adapter.addFragment(new AppListFragment(), "Archived");
@@ -44,18 +48,33 @@ public class MainActivity extends AppCompatActivity {
 
         TabLayout tabLayout = (TabLayout) findViewById(R.id.id_tabs);
         tabLayout.setupWithViewPager(viewPager);
+        ClickListener clickListener = new ClickListener();
 
         tvBackup = (Button) findViewById(R.id.tvBackup);
-        tvBackup.setOnClickListener(new View.OnClickListener() {
+        tvBackup.setOnClickListener(clickListener);
+        check =(ImageButton) findViewById(R.id.check);
+        check.setOnClickListener(clickListener);
+
+        tvSend = (ImageButton) findViewById(R.id.tvsend);
+        tvSend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                int item = viewPager.getCurrentItem();
-                Fragment fragment = adapter.getItem(item);
-                if (fragment instanceof AppListFragment) {
-                    ((AppListFragment) fragment).onTextViewClick(v);
-                }
+                PopupMenu popup = new PopupMenu(MainActivity.this, v);
+                popup.getMenuInflater().inflate(R.menu.send, popup.getMenu());
+
+                popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                    public boolean onMenuItemClick(MenuItem item) {
+                        Toast.makeText(MainActivity.this,
+                                "Clicked popup menu item " + item.getTitle(),
+                                Toast.LENGTH_SHORT).show();
+                        return true;
+                    }
+                });
+
+                popup.show();
             }
         });
+
         if (Build.VERSION.SDK_INT >= 23)
         {
             if (checkPermission())
@@ -74,6 +93,18 @@ public class MainActivity extends AppCompatActivity {
         }
 
 
+}
+
+class ClickListener implements View.OnClickListener{
+
+    @Override
+    public void onClick(View v) {
+        int item = viewPager.getCurrentItem();
+        Fragment fragment = adapter.getItem(item);
+        if (fragment instanceof AppListFragment) {
+            ((AppListFragment) fragment).onTextViewClick(v);
+        }
+    }
 }
 
     private boolean checkPermission() {
