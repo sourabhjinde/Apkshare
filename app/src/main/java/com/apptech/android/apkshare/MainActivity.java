@@ -56,24 +56,7 @@ public class MainActivity extends AppCompatActivity {
         check.setOnClickListener(clickListener);
 
         tvSend = (ImageButton) findViewById(R.id.tvsend);
-        tvSend.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                PopupMenu popup = new PopupMenu(MainActivity.this, v);
-                popup.getMenuInflater().inflate(R.menu.send, popup.getMenu());
-
-                popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-                    public boolean onMenuItemClick(MenuItem item) {
-                        Toast.makeText(MainActivity.this,
-                                "Clicked popup menu item " + item.getTitle(),
-                                Toast.LENGTH_SHORT).show();
-                        return true;
-                    }
-                });
-
-                popup.show();
-            }
-        });
+       tvSend.setOnClickListener(clickListener);
 
         if (Build.VERSION.SDK_INT >= 23)
         {

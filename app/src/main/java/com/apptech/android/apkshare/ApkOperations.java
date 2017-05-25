@@ -3,8 +3,14 @@ package com.apptech.android.apkshare;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.support.design.widget.Snackbar;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -14,6 +20,7 @@ import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
+
 
 /**
  * Created by S on 25/05/2017.
@@ -32,6 +39,10 @@ public class ApkOperations extends AsyncTask<File, Integer, Void> {
         this.apps = apps;
     }
 
+    ApkOperations(Context context)
+    {
+        this.context = context;
+    }
     @Override
     protected Void doInBackground(File... params) {
 
@@ -75,6 +86,7 @@ public class ApkOperations extends AsyncTask<File, Integer, Void> {
     @Override
     protected void onPostExecute(Void aVoid) {
         progressDialog.dismiss();
+        Toast.makeText(context,"Done successfully. Saved at " + app_root,Toast.LENGTH_LONG).show();
     }
 
 
@@ -109,17 +121,59 @@ public class ApkOperations extends AsyncTask<File, Integer, Void> {
         }
     }
 
-    public void shareApk(ArrayList<Uri> arrayListApkFilePath) {
+    public void shareApk() {
 
+        ArrayList<Uri> arrayListApkFilePath= getUris();
 
         Intent intent = new Intent(Intent.ACTION_SEND_MULTIPLE);
 
-        intent.setType("application/vnd.android.package-archive");
+        intent.setType("*/*");
         intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM,
                 arrayListApkFilePath);
 
         context.startActivity(Intent.createChooser(intent, "Share " +
                 arrayListApkFilePath.size() + " Files Via"));
     }
+
+    public ArrayList<Uri> getUris()
+    {
+        ArrayList<Uri> arrayListApkFilePath= new ArrayList<>();
+        for(AppInfo app : apps)
+        {
+            arrayListApkFilePath.add(Uri.fromFile(new File(app.filePath)));
+        }
+
+        return arrayListApkFilePath;
+    }
+
+    List<AppInfo> getInstalledAppList()
+    {
+        apps = new ArrayList<AppInfo>() ;
+        PackageManager packageManager = context.getPackageManager();
+        List<PackageInfo> packList = packageManager.getInstalledPackages(0);
+        AppInfo appInfo;
+        for (int i=0; i < packList.size(); i++)
+        {
+            appInfo = new AppInfo();
+            PackageInfo packInfo = packList.get(i);
+            if (  (packInfo.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0)
+            {
+                String filePath =packInfo.applicationInfo.publicSourceDir;
+                String appName = packInfo.applicationInfo.loadLabel(packageManager).toString();
+                Drawable appIcon = packInfo.applicationInfo.loadIcon(packageManager);
+                String version = packInfo.versionName;
+                String packageName = packInfo.packageName;
+                appInfo.setAppImage(appIcon);
+                appInfo.setAppName(appName);
+                appInfo.setAppVersion(version);
+                appInfo.setFilePath(filePath);
+                appInfo.setPackageName(packageName);
+                appInfo.setInstalled(true);
+                apps.add(appInfo);
+            }
+        }
+        return apps;
+    }
+
 }
 
