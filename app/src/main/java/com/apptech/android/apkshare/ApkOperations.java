@@ -1,5 +1,6 @@
 package com.apptech.android.apkshare;
 
+
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
@@ -9,7 +10,7 @@ import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.support.design.widget.Snackbar;
+import android.support.v4.app.Fragment;
 import android.widget.Toast;
 
 import java.io.File;
@@ -32,7 +33,7 @@ public class ApkOperations extends AsyncTask<File, Integer, Void> {
     ProgressDialog progressDialog;
     private static final String app_root = "/sdcard/APPSHARE";
     Context context;
-    List<AppInfo> apps;
+    List<AppInfo> apps,nonSystemApps,systemApps;
 
     ApkOperations(Context context, List<AppInfo> apps) {
         this.context = context;
@@ -145,35 +146,101 @@ public class ApkOperations extends AsyncTask<File, Integer, Void> {
 
         return arrayListApkFilePath;
     }
+}
 
-    List<AppInfo> getInstalledAppList()
-    {
-        apps = new ArrayList<AppInfo>() ;
-        PackageManager packageManager = context.getPackageManager();
+class GetInstalledApps extends AsyncTask<Void,Void, List<AppInfo>>{
+
+    List<AppInfo> apps;
+    OnTaskCompletedListener listener;
+    boolean wantSystem;
+
+    GetInstalledApps(){
+
+    }
+
+    GetInstalledApps(OnTaskCompletedListener onTaskCompletedListener, boolean wantSystem){
+        this.listener = onTaskCompletedListener;
+        this.wantSystem = wantSystem;
+    }
+
+    @Override
+    protected List<AppInfo> doInBackground(Void... params) {
+        apps = new ArrayList<>() ;
+        PackageManager packageManager = ((Fragment)listener).getActivity().getPackageManager();
         List<PackageInfo> packList = packageManager.getInstalledPackages(0);
         AppInfo appInfo;
-        for (int i=0; i < packList.size(); i++)
+
+        if(wantSystem) {
+            for (int i = 0; i < packList.size(); i++) {
+                PackageInfo packInfo = packList.get(i);
+
+                  /*  String filePath = packInfo.applicationInfo.publicSourceDir;
+                    String appName = packInfo.applicationInfo.loadLabel(packageManager).toString();
+                    Drawable appIcon = packInfo.applicationInfo.loadIcon(packageManager);
+                    String version = packInfo.versionName;
+                    String packageName = packInfo.packageName;
+                    appInfo.setAppImage(appIcon);
+                    appInfo.setAppName(appName);
+                    appInfo.setAppVersion(version);
+                    appInfo.setFilePath(filePath);
+                    appInfo.setPackageName(packageName);
+                    appInfo.setInstalled(true);*/
+                    appInfo = setAppInfo(packInfo,packageManager);
+                    apps.add(appInfo);
+
+            }
+        }else
         {
-            appInfo = new AppInfo();
-            PackageInfo packInfo = packList.get(i);
-            if (  (packInfo.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0)
-            {
-                String filePath =packInfo.applicationInfo.publicSourceDir;
-                String appName = packInfo.applicationInfo.loadLabel(packageManager).toString();
-                Drawable appIcon = packInfo.applicationInfo.loadIcon(packageManager);
-                String version = packInfo.versionName;
-                String packageName = packInfo.packageName;
-                appInfo.setAppImage(appIcon);
-                appInfo.setAppName(appName);
-                appInfo.setAppVersion(version);
-                appInfo.setFilePath(filePath);
-                appInfo.setPackageName(packageName);
-                appInfo.setInstalled(true);
-                apps.add(appInfo);
+            for (int i = 0; i < packList.size(); i++) {
+                appInfo = new AppInfo();
+                PackageInfo packInfo = packList.get(i);
+
+
+                if (  (packInfo.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0 )
+                {
+                   /* String filePath = packInfo.applicationInfo.publicSourceDir;
+                    String appName = packInfo.applicationInfo.loadLabel(packageManager).toString();
+                    Drawable appIcon = packInfo.applicationInfo.loadIcon(packageManager);
+                    String version = packInfo.versionName;
+                    String packageName = packInfo.packageName;
+                    appInfo.setAppImage(appIcon);
+                    appInfo.setAppName(appName);
+                    appInfo.setAppVersion(version);
+                    appInfo.setFilePath(filePath);
+                    appInfo.setPackageName(packageName);
+                    appInfo.setInstalled(true);*/
+                    appInfo = setAppInfo(packInfo,packageManager);
+                    apps.add(appInfo);
+                }
             }
         }
         return apps;
     }
+
+    AppInfo setAppInfo(PackageInfo packInfo,PackageManager packageManager){
+            AppInfo appInfo = new AppInfo();
+
+            String filePath = packInfo.applicationInfo.publicSourceDir;
+            String appName = packInfo.applicationInfo.loadLabel(packageManager).toString();
+            Drawable appIcon = packInfo.applicationInfo.loadIcon(packageManager);
+            String version = packInfo.versionName;
+            String packageName = packInfo.packageName;
+            appInfo.setAppImage(appIcon);
+            appInfo.setAppName(appName);
+            appInfo.setAppVersion(version);
+            appInfo.setFilePath(filePath);
+            appInfo.setPackageName(packageName);
+            appInfo.setInstalled(true);
+            return appInfo;
+    }
+
+
+    @Override
+    protected void onPostExecute(List<AppInfo> appInfos) {
+        super.onPostExecute(appInfos);
+        listener.onTaskCompleted(appInfos);
+    }
+
 
 }
 

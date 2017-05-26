@@ -1,6 +1,8 @@
 package com.apptech.android.apkshare;
 
-
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,6 +15,7 @@ import android.widget.TextView;
 import android.widget.Filter;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -23,7 +26,6 @@ import java.util.List;
 public class RecycleViewAdapter extends RecyclerView.Adapter<RecycleViewAdapter.ViewHolder> implements Filterable {
     private List<AppInfo> mAppList;
     private List<AppInfo> mFilteredAppList;
-
 
 
 
@@ -150,7 +152,6 @@ public class RecycleViewAdapter extends RecyclerView.Adapter<RecycleViewAdapter.
             if(app.isSelected())
                 mCheckedAppList.add(app);
         }
-
         return mCheckedAppList;
     }
 

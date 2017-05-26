@@ -2,6 +2,8 @@ package com.apptech.android.apkshare;
 
 import android.graphics.drawable.Drawable;
 
+import java.util.Comparator;
+
 /**
  * Created by S on 04/05/2017.
  */
@@ -17,10 +19,11 @@ public class AppInfo {
     boolean isBackedUp;
     boolean isInstalled;
     String backupedPath;
+    boolean isSytem;
 
 
     public AppInfo(Drawable appImage, String appName, String appVersion, boolean isSelected, String filePath, String packageName,
-                   boolean isBackedUp, boolean isInstalled, String backupedPath) {
+                   boolean isBackedUp, boolean isInstalled, String backupedPath,boolean isSytem) {
         this.appImage = appImage;
         this.appName = appName;
         this.appVersion = appVersion;
@@ -30,7 +33,7 @@ public class AppInfo {
         this.isBackedUp = isBackedUp;
         this.isInstalled = isInstalled;
         this.backupedPath = backupedPath;
-
+        this.isSytem = isSytem;
     }
 
     public AppInfo() {
@@ -114,5 +117,26 @@ public class AppInfo {
 
     public void setBackupedPath(String backupedPath) {
         this.backupedPath = backupedPath;
+    }
+
+    public boolean isSytem() {
+        return isSytem;
+    }
+
+    public void setSytem(boolean sytem) {
+        isSytem = sytem;
+    }
+}
+
+ class PackageComparator implements Comparator{
+
+    @Override
+    public int compare(Object o1, Object o2) {
+        AppInfo appInfo_1 = (AppInfo)o1;
+        AppInfo appInfo_2 =(AppInfo)o2;
+        if(appInfo_1.packageName==appInfo_1.packageName)
+            return 0;
+        else
+            return -1;
     }
 }

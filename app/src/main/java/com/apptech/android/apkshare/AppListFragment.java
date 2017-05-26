@@ -2,6 +2,9 @@ package com.apptech.android.apkshare;
 
 
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -18,6 +21,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,13 +34,14 @@ import static android.app.Activity.RESULT_OK;
  * Created by S on 03/05/2017.
  */
 
-public class AppListFragment extends Fragment implements SearchView.OnQueryTextListener,OnTextViewClickListener{
+public class AppListFragment extends Fragment implements SearchView.OnQueryTextListener,OnTextViewClickListener,OnTaskCompletedListener,OnInstallUninstallListener{
 
     //convert array to list
     List<AppInfo> appslist = new ArrayList<AppInfo>() ;
     RecycleViewAdapter adapter;
     RecyclerView rv;
-
+    ProgressBar progressBar;
+    InstallUninstallReceiver installUninstallReceiver;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -45,6 +50,9 @@ public class AppListFragment extends Fragment implements SearchView.OnQueryTextL
         rv = (RecyclerView) view.findViewById(R.id.id_recycleview);
 
         rv.setLayoutManager(new LinearLayoutManager(rv.getContext()));
+
+        progressBar = (ProgressBar) view.findViewById(R.id.pbHeaderProgress);
+
         return view;
     }
 
@@ -53,9 +61,11 @@ public class AppListFragment extends Fragment implements SearchView.OnQueryTextL
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         setHasOptionsMenu(true);
-        appslist = new ApkOperations(getActivity()).getInstalledAppList();
+        new GetInstalledApps(this,false).execute();
         adapter = new RecycleViewAdapter(appslist);
         rv.setAdapter(adapter);
+        new InstallUninstallReceiver().setOnInstallUninstallListener(this);
+
     }
 
     @Override
@@ -100,6 +110,18 @@ public class AppListFragment extends Fragment implements SearchView.OnQueryTextL
                     startActivityForResult(intent, 1);
 
                 }
+                return false;
+            }
+        });
+
+        final MenuItem showSystemApps = menu.findItem(R.id.action_showSystemApps);
+        showSystemApps.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener(){
+
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                rv.setVisibility(View.GONE);
+                progressBar.setVisibility(View.VISIBLE);
+                new GetInstalledApps(AppListFragment.this,true).execute();
                 return false;
             }
         });
@@ -167,7 +189,43 @@ public class AppListFragment extends Fragment implements SearchView.OnQueryTextL
                            break;
 
             case R.id.tvsend : new ApkOperations(this.getActivity(),adapter.getmCheckedAppList()).shareApk();
+
             default : break;
         }
+    }
+
+    @Override
+    public void onTaskCompleted(List<AppInfo> apps) {
+         progressBar.setVisibility(View.GONE);
+        rv.setVisibility(View.VISIBLE);
+        appslist.clear();
+        appslist.addAll(apps);
+        adapter.notifyDataSetChanged();
+
+    }
+
+
+    @Override
+    public void onInstallUninstall(Intent intent) {
+        String packageName =intent.getData().getSchemeSpecificPart();
+        if(intent.getAction() == Intent.ACTION_PACKAGE_REMOVED) {
+            for (AppInfo app : appslist) {
+                if (packageName.equalsIgnoreCase(app.packageName)) {
+                    appslist.remove(app);
+                    break;
+                }
+            }
+        }
+        else if(intent.getAction() == Intent.ACTION_PACKAGE_ADDED) {
+            try {
+                PackageManager packageManager = getActivity().getPackageManager();
+                PackageInfo packageInfo = packageManager.getPackageInfo(packageName, 0);
+                AppInfo appInfo = new GetInstalledApps().setAppInfo(packageInfo, packageManager);
+                appslist.add(appInfo);
+            }catch (PackageManager.NameNotFoundException ex){
+
+            }
+        }
+        adapter.notifyDataSetChanged();
     }
 }
