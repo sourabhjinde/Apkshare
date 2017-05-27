@@ -1,8 +1,5 @@
 package com.apptech.android.apkshare;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,7 +12,6 @@ import android.widget.TextView;
 import android.widget.Filter;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 

@@ -1,7 +1,6 @@
 package com.apptech.android.apkshare;
 
 
-import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.support.design.widget.TabLayout;
@@ -11,14 +10,11 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
-import android.widget.TextView;
 import android.widget.Toast;
 
 
@@ -42,13 +38,14 @@ public class MainActivity extends AppCompatActivity {
         adapter = new PagerAdapter(getSupportFragmentManager());
         final AppListFragment appListFragment = new AppListFragment();
         adapter.addFragment(appListFragment, "Installed");
-      /*  adapter.addFragment(new AppListFragment(), "Archived");
-        adapter.addFragment(new AppListFragment(), "Google Drive");*/
+        adapter.addFragment(new ArchivedFragment(), "Archived");
+      /*  adapter.addFragment(new AppListFragment(), "Google Drive");*/
         viewPager.setAdapter(adapter);
 
         TabLayout tabLayout = (TabLayout) findViewById(R.id.id_tabs);
         tabLayout.setupWithViewPager(viewPager);
         ClickListener clickListener = new ClickListener();
+
 
         tvBackup = (Button) findViewById(R.id.tvBackup);
         tvBackup.setOnClickListener(clickListener);
@@ -57,6 +54,29 @@ public class MainActivity extends AppCompatActivity {
 
         tvSend = (ImageButton) findViewById(R.id.tvsend);
        tvSend.setOnClickListener(clickListener);
+
+
+        viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener(){
+
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+                if(position == 1){
+                    tvBackup.setText("Restore");
+                }else if(position == 0){
+                    tvBackup.setText("Backup");
+                }
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+
+            }
+        });
 
         if (Build.VERSION.SDK_INT >= 23)
         {

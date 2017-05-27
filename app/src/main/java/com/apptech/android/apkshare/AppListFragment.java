@@ -2,7 +2,6 @@ package com.apptech.android.apkshare;
 
 
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -41,7 +40,6 @@ public class AppListFragment extends Fragment implements SearchView.OnQueryTextL
     RecycleViewAdapter adapter;
     RecyclerView rv;
     ProgressBar progressBar;
-    InstallUninstallReceiver installUninstallReceiver;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
