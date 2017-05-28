@@ -36,7 +36,7 @@ import static android.app.Activity.RESULT_OK;
 public class AppListFragment extends Fragment implements SearchView.OnQueryTextListener,OnTextViewClickListener,OnTaskCompletedListener,OnInstallUninstallListener{
 
     //convert array to list
-    List<AppInfo> appslist = new ArrayList<AppInfo>() ;
+    ArrayList<AppInfo> appslist = new ArrayList<AppInfo>() ;
     RecycleViewAdapter adapter;
     RecyclerView rv;
     ProgressBar progressBar;
@@ -50,7 +50,7 @@ public class AppListFragment extends Fragment implements SearchView.OnQueryTextL
         rv.setLayoutManager(new LinearLayoutManager(rv.getContext()));
 
         progressBar = (ProgressBar) view.findViewById(R.id.pbHeaderProgress);
-
+        new InstallUninstallReceiver().setOnInstallUninstallListener(this);
         return view;
     }
 
@@ -62,7 +62,6 @@ public class AppListFragment extends Fragment implements SearchView.OnQueryTextL
         new GetInstalledApps(this,false).execute();
         adapter = new RecycleViewAdapter(appslist);
         rv.setAdapter(adapter);
-        new InstallUninstallReceiver().setOnInstallUninstallListener(this);
 
     }
 
@@ -140,19 +139,6 @@ public class AppListFragment extends Fragment implements SearchView.OnQueryTextL
         }
     }
 
-   /* public static String getAppLabel(PackageManager pm, String pathToApk) {
-        PackageInfo packageInfo = pm.getPackageArchiveInfo(pathToApk, 0);
-
-        if (Build.VERSION.SDK_INT >= 8) {
-            // those two lines do the magic:
-            packageInfo.applicationInfo.sourceDir = pathToApk;
-            packageInfo.applicationInfo.publicSourceDir = pathToApk;
-        }
-
-        CharSequence label = pm.getApplicationLabel(packageInfo.applicationInfo);
-        return label != null ? label.toString() : null;
-    }*/
-
     @Override
     public boolean onQueryTextSubmit(String query) {
         return false;
@@ -193,13 +179,12 @@ public class AppListFragment extends Fragment implements SearchView.OnQueryTextL
     }
 
     @Override
-    public void onTaskCompleted(List<AppInfo> apps) {
+    public void onTaskCompleted(ArrayList<AppInfo> apps) {
          progressBar.setVisibility(View.GONE);
         rv.setVisibility(View.VISIBLE);
         appslist.clear();
         appslist.addAll(apps);
         adapter.notifyDataSetChanged();
-
     }
 
 
@@ -220,8 +205,20 @@ public class AppListFragment extends Fragment implements SearchView.OnQueryTextL
                 PackageInfo packageInfo = packageManager.getPackageInfo(packageName, 0);
                 AppInfo appInfo = new GetInstalledApps().setAppInfo(packageInfo, packageManager);
                 appslist.add(appInfo);
+
             }catch (PackageManager.NameNotFoundException ex){
 
+            }
+        }
+        adapter.notifyDataSetChanged();
+    }
+
+    public void setArchivedPackages (ArrayList<AppInfo> archivedApps){
+        for(AppInfo archivedApp : archivedApps){
+            for(AppInfo appInfo: appslist ){
+                if(archivedApp.getPackageName().equalsIgnoreCase(appInfo.getPackageName())){
+                    appInfo.setBackedUp(archivedApp.isBackedUp);
+                }
             }
         }
         adapter.notifyDataSetChanged();

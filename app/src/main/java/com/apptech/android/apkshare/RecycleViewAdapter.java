@@ -12,7 +12,6 @@ import android.widget.TextView;
 import android.widget.Filter;
 
 import java.util.ArrayList;
-import java.util.List;
 
 
 /**
@@ -20,8 +19,8 @@ import java.util.List;
  */
 
 public class RecycleViewAdapter extends RecyclerView.Adapter<RecycleViewAdapter.ViewHolder> implements Filterable {
-    private List<AppInfo> mAppList;
-    private List<AppInfo> mFilteredAppList;
+    private ArrayList<AppInfo> mAppList;
+    private ArrayList<AppInfo> mFilteredAppList;
 
 
 
@@ -33,6 +32,7 @@ public class RecycleViewAdapter extends RecyclerView.Adapter<RecycleViewAdapter.
         public final TextView mVersion;
         public final ImageView mAppIcon;
         public final CheckBox isChecked;
+        public final TextView mArchived;
 
 
         public ViewHolder(View view) {
@@ -42,6 +42,7 @@ public class RecycleViewAdapter extends RecyclerView.Adapter<RecycleViewAdapter.
             mAppName = (TextView) view.findViewById(R.id.app_name);
             mVersion = (TextView) view.findViewById(R.id.version);
             isChecked = (CheckBox) view.findViewById(R.id.chkSelected);
+            mArchived = (TextView) view.findViewById(R.id.archived);
 
             view.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -52,7 +53,7 @@ public class RecycleViewAdapter extends RecyclerView.Adapter<RecycleViewAdapter.
         }
     }
 
-    public RecycleViewAdapter(List<AppInfo> items) {
+    public RecycleViewAdapter(ArrayList<AppInfo> items) {
         mFilteredAppList = items;
         mAppList = items;
     }
@@ -73,6 +74,7 @@ public class RecycleViewAdapter extends RecyclerView.Adapter<RecycleViewAdapter.
         holder.mAppName.setText(appInfo.getAppName());
         holder.mVersion.setText(appInfo.getAppVersion());
         holder.mAppIcon.setImageDrawable(appInfo.getAppImage());
+        holder.mArchived.setText(appInfo.isBackedUp ?"Archived" :"");
         //in some cases, it will prevent unwanted situations
         holder.isChecked.setOnCheckedChangeListener(null);
         //if true, your checkbox will be selected, else unselected
@@ -141,9 +143,9 @@ public class RecycleViewAdapter extends RecyclerView.Adapter<RecycleViewAdapter.
         };
     }
 
-    public List<AppInfo> getmCheckedAppList()
+    public ArrayList<AppInfo> getmCheckedAppList()
     {
-       List<AppInfo> mCheckedAppList = new ArrayList<>() ;
+       ArrayList<AppInfo> mCheckedAppList = new ArrayList<>() ;
         for(AppInfo app : mFilteredAppList) {
             if(app.isSelected())
                 mCheckedAppList.add(app);

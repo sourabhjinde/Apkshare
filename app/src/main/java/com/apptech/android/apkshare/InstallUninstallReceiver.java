@@ -21,6 +21,8 @@ public class InstallUninstallReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        onInstallUninstallListener.onInstallUninstall(intent);
+        if(onInstallUninstallListener != null) {
+            onInstallUninstallListener.onInstallUninstall(intent);
+        }
     }
 }

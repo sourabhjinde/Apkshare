@@ -2,12 +2,9 @@ package com.apptech.android.apkshare;
 
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.app.FragmentStatePagerAdapter;
-import android.view.ViewGroup;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by S on 03/05/2017.
@@ -15,9 +12,9 @@ import java.util.List;
 
 public class PagerAdapter extends FragmentStatePagerAdapter {
 
-    private final List<Fragment> mFragmentList = new ArrayList();
+    private final ArrayList<Fragment> mFragmentList = new ArrayList();
 
-    private final List<String> mFragmentTitleNames = new ArrayList();
+    private final ArrayList<String> mFragmentTitleNames = new ArrayList();
 
 
 
