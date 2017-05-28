@@ -179,6 +179,7 @@ class GetInstalledApps extends AsyncTask<Void,Void, ArrayList<AppInfo>>{
             for (int i = 0; i < packList.size(); i++) {
                 PackageInfo packInfo = packList.get(i);
                     appInfo = setAppInfo(packInfo,packageManager);
+                    appInfo.setInstalled(true);
                     apps.add(appInfo);
 
             }
@@ -191,6 +192,7 @@ class GetInstalledApps extends AsyncTask<Void,Void, ArrayList<AppInfo>>{
                 if (  (packInfo.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0 )
                 {
                     appInfo = setAppInfo(packInfo,packageManager);
+                    appInfo.setInstalled(true);
                     apps.add(appInfo);
                 }
             }
@@ -211,7 +213,6 @@ class GetInstalledApps extends AsyncTask<Void,Void, ArrayList<AppInfo>>{
             appInfo.setAppVersion(version);
             appInfo.setFilePath(filePath);
             appInfo.setPackageName(packageName);
-            appInfo.setInstalled(true);
             return appInfo;
     }
 

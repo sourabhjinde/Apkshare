@@ -40,13 +40,6 @@ public class AppInfo {
 
     }
 
-  /*  public AppInfo(Drawable appImage, String appName, String appVersion, String filePath) {
-        this.appImage = appImage;
-        this.appName = appName;
-        this.appVersion = appVersion;
-        this.filePath = filePath;
-    }
-*/
     public Drawable getAppImage() {
         return appImage;
     }

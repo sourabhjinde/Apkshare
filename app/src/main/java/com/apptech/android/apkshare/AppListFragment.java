@@ -23,7 +23,6 @@ import android.view.ViewGroup;
 import android.widget.ProgressBar;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import static android.app.Activity.RESULT_CANCELED;
 import static android.app.Activity.RESULT_FIRST_USER;
@@ -194,6 +193,7 @@ public class AppListFragment extends Fragment implements SearchView.OnQueryTextL
         if(intent.getAction() == Intent.ACTION_PACKAGE_REMOVED) {
             for (AppInfo app : appslist) {
                 if (packageName.equalsIgnoreCase(app.packageName)) {
+                    app.setInstalled(false);
                     appslist.remove(app);
                     break;
                 }
@@ -204,6 +204,7 @@ public class AppListFragment extends Fragment implements SearchView.OnQueryTextL
                 PackageManager packageManager = getActivity().getPackageManager();
                 PackageInfo packageInfo = packageManager.getPackageInfo(packageName, 0);
                 AppInfo appInfo = new GetInstalledApps().setAppInfo(packageInfo, packageManager);
+                appInfo.setInstalled(true);
                 appslist.add(appInfo);
 
             }catch (PackageManager.NameNotFoundException ex){
