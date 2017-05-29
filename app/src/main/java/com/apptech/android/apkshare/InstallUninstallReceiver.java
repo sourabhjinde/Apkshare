@@ -10,19 +10,27 @@ import android.content.Intent;
 
 public class InstallUninstallReceiver extends BroadcastReceiver {
 
-    static OnInstallUninstallListener onInstallUninstallListener;
+    static OnInstallUninstallListener onInstallUninstallListener,onInstallUninstallListener2;
     public InstallUninstallReceiver(){
 
     }
 
     public void setOnInstallUninstallListener(OnInstallUninstallListener onInstallUninstallListener ){
-        this.onInstallUninstallListener=onInstallUninstallListener;
+        if(onInstallUninstallListener instanceof AppListFragment) {
+            this.onInstallUninstallListener = onInstallUninstallListener;
+        }
+        else if(onInstallUninstallListener instanceof ArchivedFragment){
+            this.onInstallUninstallListener2 = onInstallUninstallListener;
+        }
     }
 
     @Override
     public void onReceive(Context context, Intent intent) {
         if(onInstallUninstallListener != null) {
             onInstallUninstallListener.onInstallUninstall(intent);
+        }
+        if(onInstallUninstallListener2 != null){
+            onInstallUninstallListener2.onInstallUninstall(intent);
         }
     }
 }

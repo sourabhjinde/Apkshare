@@ -1,6 +1,7 @@
 package com.apptech.android.apkshare;
 
 
+import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.support.design.widget.TabLayout;
@@ -26,76 +27,74 @@ public class MainActivity extends AppCompatActivity implements OnArchivedCheckLi
     Button tvBackup;
     ImageButton check,tvSend;
     PagerAdapter adapter;
+    Toolbar toolbar;
+    AppListFragment appListFragment;
+    TabLayout tabLayout;
+    ClickListener clickListener;
+
     private static final int PERMISSION_REQUEST_CODE = 717;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.id_toolbar);
-        setSupportActionBar(toolbar);
 
-        viewPager = (ViewPager) findViewById(R.id.id_viewpager);
 
-        adapter = new PagerAdapter(getSupportFragmentManager());
-        final AppListFragment appListFragment = new AppListFragment();
-        adapter.addFragment(appListFragment, "Installed");
-        adapter.addFragment(new ArchivedFragment(), "Archived");
+        if(isStoragePermissionGranted()) {
+                setup();
+        }
+
+
+}
+
+public void setup(){
+    setContentView(R.layout.activity_main);
+    toolbar = (Toolbar) findViewById(R.id.id_toolbar);
+    setSupportActionBar(toolbar);
+
+    viewPager = (ViewPager) findViewById(R.id.id_viewpager);
+
+    adapter = new PagerAdapter(getSupportFragmentManager());
+    appListFragment = new AppListFragment();
+    adapter.addFragment(appListFragment, "Installed");
+    adapter.addFragment(new ArchivedFragment(), "Archived");
       /*  adapter.addFragment(new AppListFragment(), "Google Drive");*/
-        viewPager.setAdapter(adapter);
+    viewPager.setAdapter(adapter);
 
-        TabLayout tabLayout = (TabLayout) findViewById(R.id.id_tabs);
-        tabLayout.setupWithViewPager(viewPager);
-        ClickListener clickListener = new ClickListener();
-
-
-        tvBackup = (Button) findViewById(R.id.tvBackup);
-        tvBackup.setOnClickListener(clickListener);
-        check =(ImageButton) findViewById(R.id.check);
-        check.setOnClickListener(clickListener);
-
-        tvSend = (ImageButton) findViewById(R.id.tvsend);
-       tvSend.setOnClickListener(clickListener);
+    tabLayout = (TabLayout) findViewById(R.id.id_tabs);
+    tabLayout.setupWithViewPager(viewPager);
+    clickListener = new ClickListener();
 
 
-        viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener(){
+    tvBackup = (Button) findViewById(R.id.tvBackup);
+    tvBackup.setOnClickListener(clickListener);
+    check = (ImageButton) findViewById(R.id.check);
+    check.setOnClickListener(clickListener);
 
-            @Override
-            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-                if(position == 1){
-                    tvBackup.setText("Restore");
-                }else if(position == 0){
-                    tvBackup.setText("Backup");
-                }
-            }
+    tvSend = (ImageButton) findViewById(R.id.tvsend);
+    tvSend.setOnClickListener(clickListener);
 
-            @Override
-            public void onPageSelected(int position) {
 
-            }
+    viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
 
-            @Override
-            public void onPageScrollStateChanged(int state) {
-
-            }
-        });
-
-        if (Build.VERSION.SDK_INT >= 23)
-        {
-            if (checkPermission())
-            {
-                // Code for above or equal 23 API Oriented Device
-                // Your Permission granted already .Do next code
-            } else {
-                requestPermission(); // Code for permission
+        @Override
+        public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+            if (position == 1) {
+                tvBackup.setText("Restore");
+            } else if (position == 0) {
+                tvBackup.setText("Backup");
             }
         }
-        else
-        {
 
-            // Code for Below 23 API Oriented Device
-            // Do next code
+        @Override
+        public void onPageSelected(int position) {
+
         }
+
+        @Override
+        public void onPageScrollStateChanged(int state) {
+
+        }
+    });
 
 
 }
@@ -133,7 +132,7 @@ public class MainActivity extends AppCompatActivity implements OnArchivedCheckLi
     private void requestPermission() {
 
         if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-            Toast.makeText(MainActivity.this, "Write External Storage permission allows us to do store images. Please allow this permission in App Settings.", Toast.LENGTH_LONG).show();
+            Toast.makeText(MainActivity.this, "Write External Storage permission allows us to do store Apk. Please allow this permission in App Settings.", Toast.LENGTH_LONG).show();
         } else {
             ActivityCompat.requestPermissions(MainActivity.this, new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSION_REQUEST_CODE);
         }
@@ -144,11 +143,33 @@ public class MainActivity extends AppCompatActivity implements OnArchivedCheckLi
         switch (requestCode) {
             case PERMISSION_REQUEST_CODE:
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Log.e("value", "Permission Granted, Now you can use local drive .");
+                    setup();
                 } else {
-                    Log.e("value", "Permission Denied, You cannot use local drive .");
                 }
                 break;
+        }
+    }
+
+    public  boolean isStoragePermissionGranted() {
+        if (Build.VERSION.SDK_INT >= 23)
+        {
+            if (checkPermission())
+            {
+                // Code for above or equal 23 API Oriented Device
+                // Your Permission granted already .Do next code
+                return true;
+
+            } else {
+                requestPermission(); // Code for permission
+                return false;
+            }
+        }
+        else
+        {
+
+            // Code for Below 23 API Oriented Device
+            // Do next code
+            return true;
         }
     }
 

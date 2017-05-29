@@ -186,7 +186,6 @@ class GetInstalledApps extends AsyncTask<Void,Void, ArrayList<AppInfo>>{
         }else
         {
             for (int i = 0; i < packList.size(); i++) {
-                appInfo = new AppInfo();
                 PackageInfo packInfo = packList.get(i);
 
                 if (  (packInfo.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0 )
@@ -242,18 +241,40 @@ class GetArchivedFilesInfo extends AsyncTask<Void,Void,ArrayList<AppInfo>>{
         ArrayList<AppInfo> apps=
                 new ArrayList<>();
         if(directory.isDirectory()) {
-            File[] file = directory.listFiles();
-            for (File f : file) {
+            File[] files = directory.listFiles();
+            for (File f : files) {
                 if (f.isFile() && f.getPath().endsWith(".apk")) {
                     PackageManager packageManager = ((Fragment)listener).getActivity().getPackageManager();
                     PackageInfo packageInfo = packageManager.getPackageArchiveInfo(f.getPath(),0);
                     AppInfo appInfo =GetInstalledApps.setAppInfo(packageInfo,packageManager);
                     appInfo.setBackupedPath(f.getPath());
+                    appInfo.setBackedUp(true);
                     apps.add(appInfo);
                 }
             }
         }
         return apps;
+    }
+
+    public static boolean isArchivePresent(AppInfo app,Fragment fragment){
+        File directory = new File(app_root);
+        if(directory.isDirectory()) {
+            File[] files = directory.listFiles();
+            for (File f : files) {
+                if (f.isFile() && f.getPath().endsWith(".apk")) {
+                    PackageManager packageManager = fragment.getActivity().getPackageManager();
+                    PackageInfo packageInfo = packageManager.getPackageArchiveInfo(f.getPath(),0);
+                    if(packageInfo.packageName.equalsIgnoreCase(app.getPackageName())){
+                        app.setBackedUp(true);
+                        app.setBackupedPath(f.getPath());
+                        return true;
+                    }
+                }
+            }
+        }
+        app.setBackedUp(false);
+        app.setBackupedPath(null);
+        return false;
     }
 
     @Override
@@ -285,6 +306,8 @@ class DeleteArchivedFiles extends AsyncTask<Void,Integer,Void>{
                 if (file.exists()) {
                     file.delete();
                 }
+                appInfo.setBackedUp(false);
+                appInfo.setBackupedPath(null);
                 publishProgress(i*100/apps.size());
                 i++;
             }

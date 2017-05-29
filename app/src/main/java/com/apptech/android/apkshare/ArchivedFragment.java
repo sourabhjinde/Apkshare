@@ -18,6 +18,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,16 +26,17 @@ import java.util.List;
  * Created by S on 26/05/2017.
  */
 
-public class ArchivedFragment extends Fragment implements OnTaskCompletedListener,OnDeleteArchivedListener{
+public class ArchivedFragment extends Fragment implements OnTaskCompletedListener, OnInstallUninstallListener {
 
     RecyclerView recyclerView;
     static FileObserver fileObserver;
-    ArrayList<AppInfo> apps= new ArrayList<>();
+    ArrayList<AppInfo> apps = new ArrayList<>();
     RecycleViewAdapter adapter;
     ProgressBar progressBar;
     OnArchivedCheckListener onArchivedCheckListener;
 
-    private static final String app_root = Environment.getExternalStorageDirectory()+"/AppShare";
+    private static final String app_root = Environment.getExternalStorageDirectory() + "/AppShare";
+
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -43,6 +45,7 @@ public class ArchivedFragment extends Fragment implements OnTaskCompletedListene
 
         recyclerView.setLayoutManager(new LinearLayoutManager(recyclerView.getContext()));
         progressBar = (ProgressBar) view.findViewById(R.id.pbHeaderProgress);
+        new InstallUninstallReceiver().setOnInstallUninstallListener(this);
         return view;
     }
 
@@ -54,15 +57,15 @@ public class ArchivedFragment extends Fragment implements OnTaskCompletedListene
 
             @Override
             public void onEvent(int event, String file) {
-                if(event == FileObserver.CREATE  ){
+                if (event == FileObserver.CREATE) {
                     new GetArchivedFilesInfo(ArchivedFragment.this).execute();
                 }
             }
         };
         fileObserver.startWatching();
 
-       new GetArchivedFilesInfo(this).execute();
-        adapter = new RecycleViewAdapter(apps);
+        new GetArchivedFilesInfo(this).execute();
+        adapter = new RecycleViewAdapter(apps,this);
         recyclerView.setAdapter(adapter);
     }
 
@@ -75,11 +78,11 @@ public class ArchivedFragment extends Fragment implements OnTaskCompletedListene
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 ArrayList<AppInfo> checkedList = adapter.getmCheckedAppList();
-                new DeleteArchivedFiles(ArchivedFragment.this.getContext(),checkedList).execute();
+                new DeleteArchivedFiles(ArchivedFragment.this.getContext(), checkedList).execute();
 
-                for(AppInfo appInfo: checkedList) {
-                      appInfo.setBackedUp(false);
-                      apps.remove(appInfo);
+                for (AppInfo appInfo : checkedList) {
+                    appInfo.setBackedUp(false);
+                    apps.remove(appInfo);
                 }
                 adapter.notifyDataSetChanged();
                 onArchivedCheckListener.OnArchivedCheck(checkedList);
@@ -90,18 +93,19 @@ public class ArchivedFragment extends Fragment implements OnTaskCompletedListene
 
     @Override
     public void onTaskCompleted(ArrayList<AppInfo> apps) {
-       progressBar.setVisibility(View.GONE);
+        progressBar.setVisibility(View.GONE);
         recyclerView.setVisibility(View.VISIBLE);
         this.apps.clear();
         ArrayList<AppInfo> appInfoArrayList = new ArrayList<>();
-        for(AppInfo app : apps){
-            if(isPackageInstalled(app.getPackageName())){
+        for (AppInfo app : apps) {
+            if (isPackageInstalled(app.getPackageName())) {
                 app.setBackedUp(true);
-               appInfoArrayList.add(app);
+                app.setInstalled(true);
+                appInfoArrayList.add(app);
 
             }
         }
-        if(onArchivedCheckListener!=null) {
+        if (onArchivedCheckListener != null) {
             onArchivedCheckListener.OnArchivedCheck(appInfoArrayList);
         }
         this.apps.addAll(apps);
@@ -134,14 +138,31 @@ public class ArchivedFragment extends Fragment implements OnTaskCompletedListene
             }
             List<ResolveInfo> list = packageManager.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
             return !list.isEmpty();
-        }catch (PackageManager.NameNotFoundException e) {
+        } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
             return false;
         }
     }
 
     @Override
-    public void onDeleteArchived(ArrayList<AppInfo> apps) {
+    public void onInstallUninstall(Intent intent) {
+        String packageName = intent.getData().getSchemeSpecificPart();
+        if (intent.getAction() == Intent.ACTION_PACKAGE_REMOVED) {
+            for (AppInfo app : apps) {
+                if (packageName.equalsIgnoreCase(app.packageName)) {
+                    app.setInstalled(false);
+                    break;
+                }
+            }
+        } else if (intent.getAction() == Intent.ACTION_PACKAGE_ADDED) {
+            for (AppInfo app : apps) {
+                if (packageName.equalsIgnoreCase(app.packageName)) {
+                    app.setInstalled(true);
+                    break;
+                }
+            }
 
+        }
+        adapter.notifyDataSetChanged();
     }
 }

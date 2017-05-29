@@ -59,7 +59,7 @@ public class AppListFragment extends Fragment implements SearchView.OnQueryTextL
         super.onViewCreated(view, savedInstanceState);
         setHasOptionsMenu(true);
         new GetInstalledApps(this,false).execute();
-        adapter = new RecycleViewAdapter(appslist);
+        adapter = new RecycleViewAdapter(appslist,this);
         rv.setAdapter(adapter);
 
     }
@@ -205,6 +205,7 @@ public class AppListFragment extends Fragment implements SearchView.OnQueryTextL
                 PackageInfo packageInfo = packageManager.getPackageInfo(packageName, 0);
                 AppInfo appInfo = new GetInstalledApps().setAppInfo(packageInfo, packageManager);
                 appInfo.setInstalled(true);
+                GetArchivedFilesInfo.isArchivePresent(appInfo,this);
                 appslist.add(appInfo);
 
             }catch (PackageManager.NameNotFoundException ex){

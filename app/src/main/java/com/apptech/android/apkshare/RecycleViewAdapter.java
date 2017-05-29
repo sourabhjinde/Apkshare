@@ -1,5 +1,6 @@
 package com.apptech.android.apkshare;
 
+import android.support.v4.app.Fragment;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,6 +14,8 @@ import android.widget.Filter;
 
 import java.util.ArrayList;
 
+import static android.icu.lang.UCharacter.GraphemeClusterBreak.V;
+
 
 /**
  * Created by S on 03/05/2017.
@@ -21,6 +24,7 @@ import java.util.ArrayList;
 public class RecycleViewAdapter extends RecyclerView.Adapter<RecycleViewAdapter.ViewHolder> implements Filterable {
     private ArrayList<AppInfo> mAppList;
     private ArrayList<AppInfo> mFilteredAppList;
+    private Fragment mFragment;
 
 
 
@@ -32,18 +36,20 @@ public class RecycleViewAdapter extends RecyclerView.Adapter<RecycleViewAdapter.
         public final TextView mVersion;
         public final ImageView mAppIcon;
         public final CheckBox isChecked;
-        public final TextView mArchived;
+        public final TextView mArchivedorInstalled;
 
 
-        public ViewHolder(View view) {
+        public ViewHolder(View view,Fragment fragment) {
             super(view);
             mView = view;
             mAppIcon = (ImageView) view.findViewById(R.id.app_icon);
             mAppName = (TextView) view.findViewById(R.id.app_name);
             mVersion = (TextView) view.findViewById(R.id.version);
             isChecked = (CheckBox) view.findViewById(R.id.chkSelected);
-            mArchived = (TextView) view.findViewById(R.id.archived);
-
+            if(fragment instanceof AppListFragment)
+            mArchivedorInstalled = (TextView) view.findViewById(R.id.archived);
+            else
+            mArchivedorInstalled = (TextView) view.findViewById(R.id.installed);
             view.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -53,18 +59,23 @@ public class RecycleViewAdapter extends RecyclerView.Adapter<RecycleViewAdapter.
         }
     }
 
-    public RecycleViewAdapter(ArrayList<AppInfo> items) {
+    public RecycleViewAdapter(ArrayList<AppInfo> items, Fragment fragment) {
         mFilteredAppList = items;
         mAppList = items;
+        mFragment = fragment;
     }
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        int id = R.layout.app_list_item;
 
+        if(mFragment instanceof ArchivedFragment){
+            id = R.layout.archive_list_item;
+        }
         View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.app_list_item, parent, false);
+                .inflate(id, parent, false);
 
-        return new ViewHolder(view);
+        return new ViewHolder(view,mFragment);
     }
 
     @Override
@@ -74,7 +85,11 @@ public class RecycleViewAdapter extends RecyclerView.Adapter<RecycleViewAdapter.
         holder.mAppName.setText(appInfo.getAppName());
         holder.mVersion.setText(appInfo.getAppVersion());
         holder.mAppIcon.setImageDrawable(appInfo.getAppImage());
-        holder.mArchived.setText(appInfo.isBackedUp ?"Archived" :"");
+        if(mFragment instanceof AppListFragment)
+        holder.mArchivedorInstalled.setText(appInfo.isBackedUp ?"Archived" :"");
+        else
+            holder.mArchivedorInstalled.setText(appInfo.isInstalled ?"Installed" :"");
+
         //in some cases, it will prevent unwanted situations
         holder.isChecked.setOnCheckedChangeListener(null);
         //if true, your checkbox will be selected, else unselected
