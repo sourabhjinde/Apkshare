@@ -2,15 +2,15 @@ package com.apptech.android.apkshare;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.FileObserver;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SearchView;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -20,13 +20,12 @@ import android.view.ViewGroup;
 import android.widget.ProgressBar;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by S on 26/05/2017.
  */
 
-public class ArchivedFragment extends Fragment implements OnTaskCompletedListener, OnInstallUninstallListener {
+public class ArchivedFragment extends Fragment implements SearchView.OnQueryTextListener, OnTaskCompletedListener, OnTextViewClickListener, OnInstallUninstallListener {
 
     RecyclerView recyclerView;
     static FileObserver fileObserver;
@@ -65,7 +64,7 @@ public class ArchivedFragment extends Fragment implements OnTaskCompletedListene
         fileObserver.startWatching();
 
         new GetArchivedFilesInfo(this).execute();
-        adapter = new RecycleViewAdapter(apps,this);
+        adapter = new RecycleViewAdapter(apps, this);
         recyclerView.setAdapter(adapter);
     }
 
@@ -89,6 +88,25 @@ public class ArchivedFragment extends Fragment implements OnTaskCompletedListene
                 return false;
             }
         });
+
+        final MenuItem item = menu.findItem(R.id.archived_action_search);
+        final SearchView searchView = (SearchView) MenuItemCompat.getActionView(item);
+        searchView.setOnQueryTextListener(this);
+        MenuItemCompat.setOnActionExpandListener(item,
+                new MenuItemCompat.OnActionExpandListener() {
+                    @Override
+                    public boolean onMenuItemActionCollapse(MenuItem item) {
+                        // Do something when collapsed
+                        adapter.getFilter().filter("");
+                        return true; // Return true to collapse action view
+                    }
+
+                    @Override
+                    public boolean onMenuItemActionExpand(MenuItem item) {
+                        // Do something when expanded
+                        return true; // Return true to expand action view
+                    }
+                });
     }
 
     @Override
@@ -98,7 +116,7 @@ public class ArchivedFragment extends Fragment implements OnTaskCompletedListene
         this.apps.clear();
         ArrayList<AppInfo> appInfoArrayList = new ArrayList<>();
         for (AppInfo app : apps) {
-            if (isPackageInstalled(app.getPackageName())) {
+            if (GetInstalledApps.isPackageInstalled(app.getPackageName(), this)) {
                 app.setBackedUp(true);
                 app.setInstalled(true);
                 appInfoArrayList.add(app);
@@ -129,20 +147,6 @@ public class ArchivedFragment extends Fragment implements OnTaskCompletedListene
         super.onDetach();
     }
 
-    public boolean isPackageInstalled(String packageName) {
-        final PackageManager packageManager = getActivity().getPackageManager();
-        try {
-            Intent intent = packageManager.getLaunchIntentForPackage(packageName);
-            if (intent == null || !packageManager.getApplicationInfo(packageName, 0).enabled) {
-                return false;
-            }
-            List<ResolveInfo> list = packageManager.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
-            return !list.isEmpty();
-        } catch (PackageManager.NameNotFoundException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
 
     @Override
     public void onInstallUninstall(Intent intent) {
@@ -164,5 +168,47 @@ public class ArchivedFragment extends Fragment implements OnTaskCompletedListene
 
         }
         adapter.notifyDataSetChanged();
+    }
+
+    @Override
+    public boolean onQueryTextSubmit(String query) {
+        return false;
+    }
+
+    @Override
+    public boolean onQueryTextChange(String newText) {
+        adapter.getFilter().filter(newText);
+        return true;
+    }
+
+    @Override
+    public void onTextViewClick(View v) {
+        int id = v.getId();
+        switch (id) {
+            case R.id.check:
+                if (adapter.getmCheckedAppList().size() == apps.size()) {
+                    for (AppInfo app : apps) {
+                        app.setSelected(false);
+
+                    }
+                } else {
+                    for (AppInfo app : apps) {
+                        app.setSelected(true);
+                    }
+                }
+                adapter.notifyDataSetChanged();
+
+                break;
+
+            case R.id.tvBackup:
+                new InstallArchiveFiles(this.getActivity(), adapter.getmCheckedAppList()).execute();
+                break;
+
+            case R.id.tvsend : new ApkOperations(this.getActivity(),adapter.getmCheckedAppList()).shareApk();
+                break;
+
+            default:
+                break;
+        }
     }
 }

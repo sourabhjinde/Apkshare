@@ -10,6 +10,7 @@ import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Environment;
 import android.support.v4.app.Fragment;
 import android.widget.Toast;
@@ -36,7 +37,7 @@ public class ApkOperations extends AsyncTask<File, Integer, Void> {
     private static final String app_root = Environment.getExternalStorageDirectory()+"/AppShare";
 
     Context context;
-    List<AppInfo> apps,nonSystemApps,systemApps;
+    List<AppInfo> apps;
 
     ApkOperations(Context context, List<AppInfo> apps) {
         this.context = context;
@@ -157,15 +158,15 @@ class GetInstalledApps extends AsyncTask<Void,Void, ArrayList<AppInfo>>{
 
     ArrayList<AppInfo> apps;
     OnTaskCompletedListener listener;
-    boolean wantSystem;
+   // boolean wantSystem;
 
     GetInstalledApps(){
 
     }
 
-    GetInstalledApps(OnTaskCompletedListener onTaskCompletedListener, boolean wantSystem){
+    GetInstalledApps(OnTaskCompletedListener onTaskCompletedListener/*, boolean wantSystem*/){
         this.listener = onTaskCompletedListener;
-        this.wantSystem = wantSystem;
+        //this.wantSystem = wantSystem;
     }
 
     @Override
@@ -175,15 +176,22 @@ class GetInstalledApps extends AsyncTask<Void,Void, ArrayList<AppInfo>>{
         List<PackageInfo> packList = packageManager.getInstalledPackages(0);
         AppInfo appInfo;
 
-        if(wantSystem) {
+      //  if(wantSystem) {
             for (int i = 0; i < packList.size(); i++) {
                 PackageInfo packInfo = packList.get(i);
                     appInfo = setAppInfo(packInfo,packageManager);
                     appInfo.setInstalled(true);
-                    apps.add(appInfo);
+
+                if (  (packInfo.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0 )
+                {
+                     appInfo.setSytem(false);
+                }else{
+                     appInfo.setSytem(true);
+                }
+                apps.add(appInfo);
 
             }
-        }else
+        /*}else
         {
             for (int i = 0; i < packList.size(); i++) {
                 PackageInfo packInfo = packList.get(i);
@@ -195,7 +203,7 @@ class GetInstalledApps extends AsyncTask<Void,Void, ArrayList<AppInfo>>{
                     apps.add(appInfo);
                 }
             }
-        }
+        }*/
         return apps;
     }
 
@@ -220,6 +228,16 @@ class GetInstalledApps extends AsyncTask<Void,Void, ArrayList<AppInfo>>{
     protected void onPostExecute(ArrayList<AppInfo> appInfos) {
         super.onPostExecute(appInfos);
         listener.onTaskCompleted(appInfos);
+    }
+
+    public static boolean isPackageInstalled(String packagename,Fragment fragment) {
+        PackageManager packageManager = fragment.getActivity().getPackageManager();
+        try {
+            packageManager.getPackageInfo(packagename, 0);
+            return true;
+        } catch (PackageManager.NameNotFoundException e) {
+            return false;
+        }
     }
 }
 
@@ -246,9 +264,15 @@ class GetArchivedFilesInfo extends AsyncTask<Void,Void,ArrayList<AppInfo>>{
                 if (f.isFile() && f.getPath().endsWith(".apk")) {
                     PackageManager packageManager = ((Fragment)listener).getActivity().getPackageManager();
                     PackageInfo packageInfo = packageManager.getPackageArchiveInfo(f.getPath(),0);
+                    if (Build.VERSION.SDK_INT >= 8) {
+                        packageInfo.applicationInfo.sourceDir = f.getPath();
+                        packageInfo.applicationInfo.publicSourceDir = f.getPath();
+                    }
+
                     AppInfo appInfo =GetInstalledApps.setAppInfo(packageInfo,packageManager);
                     appInfo.setBackupedPath(f.getPath());
                     appInfo.setBackedUp(true);
+                    appInfo.setFilePath(f.getPath());
                     apps.add(appInfo);
                 }
             }
@@ -342,6 +366,69 @@ class DeleteArchivedFiles extends AsyncTask<Void,Integer,Void>{
         progressDialog.dismiss();
     }
 }
+
+class InstallArchiveFiles extends AsyncTask<Void,Integer,Void>{
+    ArrayList<AppInfo> apps;
+    Context context;
+    ProgressDialog progressDialog;
+
+    public InstallArchiveFiles(){
+    }
+
+    public InstallArchiveFiles(Context context, ArrayList<AppInfo> apps){
+        this.context =context;
+        this.apps = apps;
+    }
+
+    @Override
+    protected Void doInBackground(Void... params) {
+        try {
+            int i=0;
+            for (AppInfo appInfo : apps) {
+                File file = new File(appInfo.getBackupedPath());
+                if (file.exists()) {
+                    Intent intent = new Intent(Intent.ACTION_VIEW);
+                    intent.setDataAndType(Uri.fromFile(file), "application/vnd.android.package-archive");
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    context.startActivity(intent);
+                }
+                appInfo.setBackedUp(true);
+                publishProgress(i*100/apps.size());
+                i++;
+            }
+        }catch (Exception ex){
+
+        }
+        return null;
+    }
+
+    @Override
+    protected void onPreExecute() {
+        super.onPreExecute();
+        progressDialog = new ProgressDialog(context);
+        progressDialog.setMessage("Deleting Archive/s");
+        progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+        progressDialog.setIndeterminate(false);
+        progressDialog.setProgress(0);
+        progressDialog.setCancelable(false);
+        progressDialog.setMax(100);
+        progressDialog.show();
+    }
+
+    @Override
+    protected void onProgressUpdate(Integer... values) {
+        super.onProgressUpdate(values);
+        progressDialog.setProgress(values[0]);
+    }
+
+    @Override
+    protected void onPostExecute(Void aVoid) {
+        super.onPostExecute(aVoid);
+        progressDialog.dismiss();
+    }
+}
+
+
 
 
 

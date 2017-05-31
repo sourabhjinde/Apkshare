@@ -14,7 +14,6 @@ import android.widget.Filter;
 
 import java.util.ArrayList;
 
-import static android.icu.lang.UCharacter.GraphemeClusterBreak.V;
 
 
 /**
@@ -126,10 +125,11 @@ public class RecycleViewAdapter extends RecyclerView.Adapter<RecycleViewAdapter.
             protected FilterResults performFiltering(CharSequence charSequence) {
 
                 String charString = charSequence.toString();
+                ArrayList<AppInfo> tempList;
 
                 if (charString.isEmpty()) {
 
-                    mFilteredAppList = mAppList;
+                    tempList = mAppList;
                 } else {
 
                     ArrayList<AppInfo> filteredList = new ArrayList<>();
@@ -142,11 +142,11 @@ public class RecycleViewAdapter extends RecyclerView.Adapter<RecycleViewAdapter.
                         }
                     }
 
-                    mFilteredAppList = filteredList;
+                    tempList = filteredList;
                 }
 
                 FilterResults filterResults = new FilterResults();
-                filterResults.values = mFilteredAppList;
+                filterResults.values = tempList;
                 return filterResults;
             }
 

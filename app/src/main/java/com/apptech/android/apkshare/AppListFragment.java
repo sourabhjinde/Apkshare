@@ -39,6 +39,7 @@ public class AppListFragment extends Fragment implements SearchView.OnQueryTextL
     RecycleViewAdapter adapter;
     RecyclerView rv;
     ProgressBar progressBar;
+    boolean WantSystem = false;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -58,7 +59,7 @@ public class AppListFragment extends Fragment implements SearchView.OnQueryTextL
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         setHasOptionsMenu(true);
-        new GetInstalledApps(this,false).execute();
+        new GetInstalledApps(this/*,false*/).execute();
         adapter = new RecycleViewAdapter(appslist,this);
         rv.setAdapter(adapter);
 
@@ -104,7 +105,7 @@ public class AppListFragment extends Fragment implements SearchView.OnQueryTextL
                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     intent.putExtra(Intent.EXTRA_RETURN_RESULT, true);
                     startActivityForResult(intent, 1);
-
+                    adapter.notifyDataSetChanged();
                 }
                 return false;
             }
@@ -117,7 +118,8 @@ public class AppListFragment extends Fragment implements SearchView.OnQueryTextL
             public boolean onMenuItemClick(MenuItem item) {
                 rv.setVisibility(View.GONE);
                 progressBar.setVisibility(View.VISIBLE);
-                new GetInstalledApps(AppListFragment.this,true).execute();
+                WantSystem =true;
+                new GetInstalledApps(AppListFragment.this/*,true*/).execute();
                 return false;
             }
         });
@@ -160,7 +162,6 @@ public class AppListFragment extends Fragment implements SearchView.OnQueryTextL
                              if(adapter.getmCheckedAppList().size() == appslist.size()) {
                                  for (AppInfo app : appslist) {
                                      app.setSelected(false);
-
                                  }
                              }else{
                                  for (AppInfo app : appslist) {
@@ -181,8 +182,20 @@ public class AppListFragment extends Fragment implements SearchView.OnQueryTextL
     public void onTaskCompleted(ArrayList<AppInfo> apps) {
          progressBar.setVisibility(View.GONE);
         rv.setVisibility(View.VISIBLE);
-        appslist.clear();
-        appslist.addAll(apps);
+        /*appslist.clear();
+
+        appslist.addAll(apps);*/
+
+        for(AppInfo appInfo : apps){
+            if(appslist.contains(appInfo)){
+                continue;
+            }else if(WantSystem==true){
+                appslist.add(appInfo);
+            }else if(appInfo.isSytem == WantSystem){
+                appslist.add(appInfo);
+            }
+        }
+
         adapter.notifyDataSetChanged();
     }
 
@@ -209,7 +222,6 @@ public class AppListFragment extends Fragment implements SearchView.OnQueryTextL
                 appslist.add(appInfo);
 
             }catch (PackageManager.NameNotFoundException ex){
-
             }
         }
         adapter.notifyDataSetChanged();
@@ -217,11 +229,13 @@ public class AppListFragment extends Fragment implements SearchView.OnQueryTextL
 
     public void setArchivedPackages (ArrayList<AppInfo> archivedApps){
         for(AppInfo archivedApp : archivedApps){
-            for(AppInfo appInfo: appslist ){
-                if(archivedApp.getPackageName().equalsIgnoreCase(appInfo.getPackageName())){
+         /*   for(AppInfo appInfo: appslist ){
+                if(archivedApp.equals(appInfo)){
                     appInfo.setBackedUp(archivedApp.isBackedUp);
                 }
-            }
+            }*/
+         if(appslist.contains(archivedApp))
+             appslist.get(appslist.indexOf(archivedApp)).setBackedUp(archivedApp.isBackedUp);
         }
         adapter.notifyDataSetChanged();
     }

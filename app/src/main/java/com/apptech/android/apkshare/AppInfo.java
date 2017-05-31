@@ -119,7 +119,29 @@ public class AppInfo {
     public void setSytem(boolean sytem) {
         isSytem = sytem;
     }
+
+    @Override
+    public boolean equals(Object o) {
+
+        // If the object is compared with itself then return true
+        if (o == this) {
+            return true;
+        }
+
+        /* Check if o is an instance of Complex or not
+          "null instanceof [type]" also returns false */
+        if (!(o instanceof AppInfo)) {
+            return false;
+        }
+
+        // typecast o to Complex so that we can compare data members
+        AppInfo c = (AppInfo) o;
+
+        // Compare the data members and return accordingly
+        return this.packageName.equalsIgnoreCase(c.getPackageName()) && this.getAppVersion().equalsIgnoreCase(c.getAppVersion());
+    }
 }
+
 
  class PackageComparator implements Comparator{
 
