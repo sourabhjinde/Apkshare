@@ -21,9 +21,11 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
-
 
 
 /**
@@ -158,15 +160,18 @@ class GetInstalledApps extends AsyncTask<Void,Void, ArrayList<AppInfo>>{
 
     ArrayList<AppInfo> apps;
     OnTaskCompletedListener listener;
-   // boolean wantSystem;
+    boolean wantSystem;
+    private static final DecimalFormat format = new DecimalFormat("#.##");
+    private static final long MiB = 1024 * 1024;
+    private static final long KiB = 1024;
 
     GetInstalledApps(){
 
     }
 
-    GetInstalledApps(OnTaskCompletedListener onTaskCompletedListener/*, boolean wantSystem*/){
+    GetInstalledApps(OnTaskCompletedListener onTaskCompletedListener, boolean wantSystem){
         this.listener = onTaskCompletedListener;
-        //this.wantSystem = wantSystem;
+        this.wantSystem = wantSystem;
     }
 
     @Override
@@ -176,7 +181,7 @@ class GetInstalledApps extends AsyncTask<Void,Void, ArrayList<AppInfo>>{
         List<PackageInfo> packList = packageManager.getInstalledPackages(0);
         AppInfo appInfo;
 
-      //  if(wantSystem) {
+        if(wantSystem) {
             for (int i = 0; i < packList.size(); i++) {
                 PackageInfo packInfo = packList.get(i);
                     appInfo = setAppInfo(packInfo,packageManager);
@@ -191,7 +196,7 @@ class GetInstalledApps extends AsyncTask<Void,Void, ArrayList<AppInfo>>{
                 apps.add(appInfo);
 
             }
-        /*}else
+        }else
         {
             for (int i = 0; i < packList.size(); i++) {
                 PackageInfo packInfo = packList.get(i);
@@ -203,7 +208,7 @@ class GetInstalledApps extends AsyncTask<Void,Void, ArrayList<AppInfo>>{
                     apps.add(appInfo);
                 }
             }
-        }*/
+        }
         return apps;
     }
 
@@ -215,11 +220,14 @@ class GetInstalledApps extends AsyncTask<Void,Void, ArrayList<AppInfo>>{
             Drawable appIcon = packInfo.applicationInfo.loadIcon(packageManager);
             String version = packInfo.versionName;
             String packageName = packInfo.packageName;
+            String installDate = new SimpleDateFormat("yyyy/mm/dd").format(new Date(packInfo.firstInstallTime));
             appInfo.setAppImage(appIcon);
             appInfo.setAppName(appName);
             appInfo.setAppVersion(version);
             appInfo.setFilePath(filePath);
             appInfo.setPackageName(packageName);
+            appInfo.setDate(installDate);
+            appInfo.setSize(getFileSize(new File(filePath)));
             return appInfo;
     }
 
@@ -238,6 +246,22 @@ class GetInstalledApps extends AsyncTask<Void,Void, ArrayList<AppInfo>>{
         } catch (PackageManager.NameNotFoundException e) {
             return false;
         }
+    }
+
+    public static String getFileSize(File file) {
+
+        if (!file.isFile()) {
+            throw new IllegalArgumentException("Expected a file");
+        }
+        final double length = file.length();
+
+        if (length > MiB) {
+            return format.format(length / MiB) + " MB";
+        }
+        if (length > KiB) {
+            return format.format(length / KiB) + " KB";
+        }
+        return format.format(length) + " B";
     }
 }
 

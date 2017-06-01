@@ -13,7 +13,6 @@ import android.support.v4.view.MenuItemCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -36,10 +35,12 @@ public class AppListFragment extends Fragment implements SearchView.OnQueryTextL
 
     //convert array to list
     ArrayList<AppInfo> appslist = new ArrayList<AppInfo>() ;
+    ArrayList<AppInfo> archivedList;
     RecycleViewAdapter adapter;
     RecyclerView rv;
     ProgressBar progressBar;
     boolean WantSystem = false;
+    SearchView searchView;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -59,7 +60,7 @@ public class AppListFragment extends Fragment implements SearchView.OnQueryTextL
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         setHasOptionsMenu(true);
-        new GetInstalledApps(this/*,false*/).execute();
+        new GetInstalledApps(this,false).execute();
         adapter = new RecycleViewAdapter(appslist,this);
         rv.setAdapter(adapter);
 
@@ -72,7 +73,7 @@ public class AppListFragment extends Fragment implements SearchView.OnQueryTextL
         inflater.inflate(R.menu.menu_main, menu);
 
         final MenuItem item = menu.findItem(R.id.action_search);
-        final SearchView searchView = (SearchView) MenuItemCompat.getActionView(item);
+        searchView = (SearchView) MenuItemCompat.getActionView(item);
         searchView.setOnQueryTextListener(this);
 
         MenuItemCompat.setOnActionExpandListener(item,
@@ -105,7 +106,6 @@ public class AppListFragment extends Fragment implements SearchView.OnQueryTextL
                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     intent.putExtra(Intent.EXTRA_RETURN_RESULT, true);
                     startActivityForResult(intent, 1);
-                    adapter.notifyDataSetChanged();
                 }
                 return false;
             }
@@ -119,7 +119,8 @@ public class AppListFragment extends Fragment implements SearchView.OnQueryTextL
                 rv.setVisibility(View.GONE);
                 progressBar.setVisibility(View.VISIBLE);
                 WantSystem =true;
-                new GetInstalledApps(AppListFragment.this/*,true*/).execute();
+                new GetInstalledApps(AppListFragment.this,true).execute();
+                WantSystem = true;
                 return false;
             }
         });
@@ -131,11 +132,8 @@ public class AppListFragment extends Fragment implements SearchView.OnQueryTextL
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == 1) {
             if (resultCode == RESULT_OK) {
-                Log.d("TAG", "onActivityResult: user accepted the (un)install");
             } else if (resultCode == RESULT_CANCELED) {
-                Log.d("TAG", "onActivityResult: user canceled the (un)install");
             } else if (resultCode == RESULT_FIRST_USER) {
-                Log.d("TAG", "onActivityResult: failed to (un)install");
             }
         }
     }
@@ -182,21 +180,14 @@ public class AppListFragment extends Fragment implements SearchView.OnQueryTextL
     public void onTaskCompleted(ArrayList<AppInfo> apps) {
          progressBar.setVisibility(View.GONE);
         rv.setVisibility(View.VISIBLE);
-        /*appslist.clear();
+        appslist.clear();
 
-        appslist.addAll(apps);*/
-
-        for(AppInfo appInfo : apps){
-            if(appslist.contains(appInfo)){
-                continue;
-            }else if(WantSystem==true){
-                appslist.add(appInfo);
-            }else if(appInfo.isSytem == WantSystem){
-                appslist.add(appInfo);
-            }
+        appslist.addAll(apps);
+        if(WantSystem == true){
+            setArchivedPackages(archivedList);
+        }else {
+            adapter.notifyDataSetChanged();
         }
-
-        adapter.notifyDataSetChanged();
     }
 
 
@@ -224,10 +215,17 @@ public class AppListFragment extends Fragment implements SearchView.OnQueryTextL
             }catch (PackageManager.NameNotFoundException ex){
             }
         }
-        adapter.notifyDataSetChanged();
+        //adapter.notifyDataSetChanged();
+        if(searchView!=null) {
+            adapter.getFilter().filter(searchView.getQuery());
+        }
+        else{
+            adapter.notifyDataSetChanged();
+        }
     }
 
     public void setArchivedPackages (ArrayList<AppInfo> archivedApps){
+        archivedList = archivedApps;
         for(AppInfo archivedApp : archivedApps){
          /*   for(AppInfo appInfo: appslist ){
                 if(archivedApp.equals(appInfo)){

@@ -29,8 +29,11 @@
             android:layout_height="wrap_content"
             android:layout_alignParentTop="true"
             android:layout_toRightOf="@id/app_icon"
+            android:layout_toLeftOf="@+id/chkSelected"
             android:textSize="20sp"
-            android:textStyle="bold"/>
+            android:textStyle="bold"
+            android:ellipsize="end"
+            android:maxLines="1"/>
 
         <TextView
             android:id="@+id/version"
@@ -38,7 +41,7 @@
             android:layout_height="wrap_content"
             android:layout_below="@id/app_name"
             android:layout_toRightOf="@id/app_icon"
-            android:textSize="15sp"/>
+            android:textSize="12sp"/>
 
         <CheckBox
             android:id="@+id/chkSelected"
@@ -47,14 +50,28 @@
             android:layout_alignParentRight="true"
             android:layout_centerVertical="true"
             />
+        <TextView
+            android:id="@+id/date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toRightOf="@id/app_icon"
+            android:layout_below="@id/version"
+            android:textSize="12sp"/>
+        <TextView
+            android:id="@+id/size"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toRightOf="@id/date"
+            android:layout_alignBaseline="@id/date"
+            android:textSize="12sp"/>
 
         <TextView
             android:id="@+id/archived"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@id/version"
-            android:layout_toRightOf="@id/app_icon"
-            android:textSize="15sp"
+            android:layout_toLeftOf="@id/chkSelected"
+            android:layout_alignBaseline="@id/date"
+            android:textSize="12sp"
             android:textColor="@android:color/holo_red_light"/>
 
     </RelativeLayout>

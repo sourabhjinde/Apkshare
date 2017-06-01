@@ -18,7 +18,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
-
 import java.util.ArrayList;
 
 /**
@@ -33,6 +32,7 @@ public class ArchivedFragment extends Fragment implements SearchView.OnQueryText
     RecycleViewAdapter adapter;
     ProgressBar progressBar;
     OnArchivedCheckListener onArchivedCheckListener;
+    SearchView searchView;
 
     private static final String app_root = Environment.getExternalStorageDirectory() + "/AppShare";
 
@@ -56,7 +56,8 @@ public class ArchivedFragment extends Fragment implements SearchView.OnQueryText
 
             @Override
             public void onEvent(int event, String file) {
-                if (event == FileObserver.CREATE) {
+                if (event == FileObserver.CREATE || event == FileObserver.MOVE_SELF || event == FileObserver.MOVED_FROM || event == FileObserver.MOVED_TO
+                        || event == FileObserver.DELETE || event == FileObserver.DELETE_SELF) {
                     new GetArchivedFilesInfo(ArchivedFragment.this).execute();
                 }
             }
@@ -72,6 +73,26 @@ public class ArchivedFragment extends Fragment implements SearchView.OnQueryText
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
         inflater.inflate(R.menu.archived_menu, menu);
+
+        final MenuItem item = menu.findItem(R.id.archived_action_search);
+        searchView = (SearchView) MenuItemCompat.getActionView(item);
+        searchView.setOnQueryTextListener(this);
+        MenuItemCompat.setOnActionExpandListener(item,
+                new MenuItemCompat.OnActionExpandListener() {
+                    @Override
+                    public boolean onMenuItemActionCollapse(MenuItem item) {
+                        // Do something when collapsed
+                        adapter.getFilter().filter("");
+                        return true; // Return true to collapse action view
+                    }
+
+                    @Override
+                    public boolean onMenuItemActionExpand(MenuItem item) {
+                        // Do something when expanded
+                        return true; // Return true to expand action view
+                    }
+                });
+
         final MenuItem delete = menu.findItem(R.id.archived_delete);
         delete.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
@@ -89,24 +110,7 @@ public class ArchivedFragment extends Fragment implements SearchView.OnQueryText
             }
         });
 
-        final MenuItem item = menu.findItem(R.id.archived_action_search);
-        final SearchView searchView = (SearchView) MenuItemCompat.getActionView(item);
-        searchView.setOnQueryTextListener(this);
-        MenuItemCompat.setOnActionExpandListener(item,
-                new MenuItemCompat.OnActionExpandListener() {
-                    @Override
-                    public boolean onMenuItemActionCollapse(MenuItem item) {
-                        // Do something when collapsed
-                        adapter.getFilter().filter("");
-                        return true; // Return true to collapse action view
-                    }
 
-                    @Override
-                    public boolean onMenuItemActionExpand(MenuItem item) {
-                        // Do something when expanded
-                        return true; // Return true to expand action view
-                    }
-                });
     }
 
     @Override
@@ -127,7 +131,11 @@ public class ArchivedFragment extends Fragment implements SearchView.OnQueryText
             onArchivedCheckListener.OnArchivedCheck(appInfoArrayList);
         }
         this.apps.addAll(apps);
-        adapter.notifyDataSetChanged();
+        if (searchView != null) {
+            adapter.getFilter().filter(searchView.getQuery());
+        } else {
+            adapter.notifyDataSetChanged();
+        }
     }
 
     @Override
@@ -167,7 +175,9 @@ public class ArchivedFragment extends Fragment implements SearchView.OnQueryText
             }
 
         }
+
         adapter.notifyDataSetChanged();
+
     }
 
     @Override
@@ -204,7 +214,8 @@ public class ArchivedFragment extends Fragment implements SearchView.OnQueryText
                 new InstallArchiveFiles(this.getActivity(), adapter.getmCheckedAppList()).execute();
                 break;
 
-            case R.id.tvsend : new ApkOperations(this.getActivity(),adapter.getmCheckedAppList()).shareApk();
+            case R.id.tvsend:
+                new ApkOperations(this.getActivity(), adapter.getmCheckedAppList()).shareApk();
                 break;
 
             default:

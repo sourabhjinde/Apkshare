@@ -20,10 +20,10 @@ public class AppInfo {
     boolean isInstalled;
     String backupedPath;
     boolean isSytem;
+    String date;
+    String size;
 
-
-    public AppInfo(Drawable appImage, String appName, String appVersion, boolean isSelected, String filePath, String packageName,
-                   boolean isBackedUp, boolean isInstalled, String backupedPath,boolean isSytem) {
+    public AppInfo(Drawable appImage, String appName, String appVersion, boolean isSelected, String filePath, String packageName, boolean isBackedUp, boolean isInstalled, String backupedPath, boolean isSytem, String date, String size) {
         this.appImage = appImage;
         this.appName = appName;
         this.appVersion = appVersion;
@@ -34,6 +34,8 @@ public class AppInfo {
         this.isInstalled = isInstalled;
         this.backupedPath = backupedPath;
         this.isSytem = isSytem;
+        this.date = date;
+        this.size = size;
     }
 
     public AppInfo() {
@@ -46,6 +48,22 @@ public class AppInfo {
 
     public void setAppImage(Drawable appImage) {
         this.appImage = appImage;
+    }
+
+    public String getDate() {
+        return date;
+    }
+
+    public void setDate(String date) {
+        this.date = date;
+    }
+
+    public String getSize() {
+        return size;
+    }
+
+    public void setSize(String size) {
+        this.size = size;
     }
 
     public String getAppName() {

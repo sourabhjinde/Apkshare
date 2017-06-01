@@ -1,7 +1,9 @@
 package com.apptech.android.apkshare;
 
+import android.app.Activity;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.RecyclerView;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -36,6 +38,8 @@ public class RecycleViewAdapter extends RecyclerView.Adapter<RecycleViewAdapter.
         public final ImageView mAppIcon;
         public final CheckBox isChecked;
         public final TextView mArchivedorInstalled;
+        public final TextView date;
+        public final TextView size;
 
 
         public ViewHolder(View view,Fragment fragment) {
@@ -45,6 +49,8 @@ public class RecycleViewAdapter extends RecyclerView.Adapter<RecycleViewAdapter.
             mAppName = (TextView) view.findViewById(R.id.app_name);
             mVersion = (TextView) view.findViewById(R.id.version);
             isChecked = (CheckBox) view.findViewById(R.id.chkSelected);
+            date = (TextView)view.findViewById(R.id.date);
+            size =(TextView) view.findViewById(R.id.size);
             if(fragment instanceof AppListFragment)
             mArchivedorInstalled = (TextView) view.findViewById(R.id.archived);
             else
@@ -79,7 +85,6 @@ public class RecycleViewAdapter extends RecyclerView.Adapter<RecycleViewAdapter.
 
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
-
         final AppInfo appInfo = mFilteredAppList.get(position);
         holder.mAppName.setText(appInfo.getAppName());
         holder.mVersion.setText(appInfo.getAppVersion());
@@ -88,6 +93,9 @@ public class RecycleViewAdapter extends RecyclerView.Adapter<RecycleViewAdapter.
         holder.mArchivedorInstalled.setText(appInfo.isBackedUp ?"Archived" :"");
         else
             holder.mArchivedorInstalled.setText(appInfo.isInstalled ?"Installed" :"");
+
+        holder.date.setText(appInfo.getDate()+" - ");
+        holder.size.setText(appInfo.getSize());
 
         //in some cases, it will prevent unwanted situations
         holder.isChecked.setOnCheckedChangeListener(null);
