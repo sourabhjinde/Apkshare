@@ -1,6 +1,7 @@
 package com.apptech.android.apkshare;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
@@ -8,6 +9,7 @@ import android.os.FileObserver;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.MenuItemCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
@@ -95,22 +97,33 @@ DialogChooseDirectory.Result, OnMoveFilesCompleteListener{
         delete.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                ArrayList<AppInfo> checkedList = adapter.getmCheckedAppList();
+                final ArrayList<AppInfo> checkedList = adapter.getmCheckedAppList();
                 if (checkedList.isEmpty()) {
                     Toast.makeText(ArchivedFragment.this.getActivity(), "Please select an app first", Toast.LENGTH_LONG).show();
                 } else {
-                    new DeleteArchivedFiles(ArchivedFragment.this.getContext(), checkedList).execute();
 
-                    for (AppInfo appInfo : checkedList) {
-                        appInfo.setBackedUp(false);
-                        apps.remove(appInfo);
-                    }
-                    adapter.notifyDataSetChanged();
-                    if (apps.isEmpty()) {
-                        recyclerView.setVisibility(View.GONE);
-                        emptyView.setVisibility(View.VISIBLE);
-                    }
-                    onArchivedCheckListener.OnArchivedCheck(checkedList);
+                    new AlertDialog.Builder(ArchivedFragment.this.getActivity())
+                            .setTitle("Delete Confirm")
+                            .setMessage("Do you really want to delete "+checkedList.size()+" item(s)?")
+                            .setIcon(android.R.drawable.ic_dialog_alert)
+                            .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+
+                                public void onClick(DialogInterface dialog, int whichButton) {
+                                    new DeleteArchivedFiles(ArchivedFragment.this.getContext(), checkedList).execute();
+
+                                    for (AppInfo appInfo : checkedList) {
+                                        appInfo.setBackedUp(false);
+                                        apps.remove(appInfo);
+                                    }
+                                    adapter.notifyDataSetChanged();
+                                    if (apps.isEmpty()) {
+                                        recyclerView.setVisibility(View.GONE);
+                                        emptyView.setVisibility(View.VISIBLE);
+                                    }
+                                    onArchivedCheckListener.OnArchivedCheck(checkedList);
+                                }})
+                            .setNegativeButton(android.R.string.no, null).show();
+
                 }
                 return false;
             }
