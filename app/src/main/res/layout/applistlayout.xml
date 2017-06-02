@@ -22,5 +22,12 @@
         android:visibility="gone"
         tools:context=".MainActivity">
     </android.support.v7.widget.RecyclerView>
+    <TextView
+        android:id="@+id/empty_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:visibility="gone"
+        android:text="No non-system apps available" />
 </FrameLayout>
 

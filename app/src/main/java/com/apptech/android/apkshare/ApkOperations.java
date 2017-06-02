@@ -4,6 +4,7 @@ package com.apptech.android.apkshare;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -21,11 +22,14 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
+import java.sql.Array;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
+import static android.R.attr.fragment;
 
 
 /**
@@ -36,10 +40,11 @@ public class ApkOperations extends AsyncTask<File, Integer, Void> {
 
     private String resp;
     ProgressDialog progressDialog;
-    private static final String app_root = Environment.getExternalStorageDirectory()+"/AppShare";
+    static final String app_root = Environment.getExternalStorageDirectory()+"/AppShare";
 
     Context context;
     List<AppInfo> apps;
+    String storageFolder;
 
     ApkOperations(Context context, List<AppInfo> apps) {
         this.context = context;
@@ -56,14 +61,14 @@ public class ApkOperations extends AsyncTask<File, Integer, Void> {
         File file;
         File copiedFile;
         try {
-
-            copiedFile = new File(app_root);
+            storageFolder =MainActivity.getStorageFolder();
+            copiedFile = new File(storageFolder);
             copiedFile.mkdir();
             int i = 1;
             for (AppInfo app : apps) {
                 file = new File(app.getFilePath());
                 if (file.exists()) {
-                    copiedFile = new File(app_root + "/" + app.getAppName() + ".apk");
+                    copiedFile = new File(storageFolder + "/" + app.getAppName() + ".apk");
                     copiedFile.createNewFile();
                     copyFile(file, copiedFile);
                     publishProgress(i * 100 / apps.size());
@@ -94,7 +99,7 @@ public class ApkOperations extends AsyncTask<File, Integer, Void> {
     @Override
     protected void onPostExecute(Void aVoid) {
         progressDialog.dismiss();
-        Toast.makeText(context,"Done successfully. Saved at " + app_root,Toast.LENGTH_LONG).show();
+        Toast.makeText(context,"Done successfully. Saved at " + storageFolder,Toast.LENGTH_LONG).show();
     }
 
 
@@ -214,21 +219,24 @@ class GetInstalledApps extends AsyncTask<Void,Void, ArrayList<AppInfo>>{
 
     public static AppInfo setAppInfo(PackageInfo packInfo,PackageManager packageManager){
             AppInfo appInfo = new AppInfo();
+            try {
+                String filePath = packInfo.applicationInfo.publicSourceDir;
+                String appName = packInfo.applicationInfo.loadLabel(packageManager).toString();
+                Drawable appIcon = packInfo.applicationInfo.loadIcon(packageManager);
+                String version = packInfo.versionName;
+                String packageName = packInfo.packageName;
+                String installDate = new SimpleDateFormat("yyyy/mm/dd").format(new Date(packInfo.firstInstallTime));
+                appInfo.setAppImage(appIcon);
+                appInfo.setAppName(appName);
+                appInfo.setAppVersion(version);
+                appInfo.setFilePath(filePath);
+                appInfo.setPackageName(packageName);
+                appInfo.setDate(installDate);
+                appInfo.setSize(getFileSize(new File(filePath)));
 
-            String filePath = packInfo.applicationInfo.publicSourceDir;
-            String appName = packInfo.applicationInfo.loadLabel(packageManager).toString();
-            Drawable appIcon = packInfo.applicationInfo.loadIcon(packageManager);
-            String version = packInfo.versionName;
-            String packageName = packInfo.packageName;
-            String installDate = new SimpleDateFormat("yyyy/mm/dd").format(new Date(packInfo.firstInstallTime));
-            appInfo.setAppImage(appIcon);
-            appInfo.setAppName(appName);
-            appInfo.setAppVersion(version);
-            appInfo.setFilePath(filePath);
-            appInfo.setPackageName(packageName);
-            appInfo.setDate(installDate);
-            appInfo.setSize(getFileSize(new File(filePath)));
-            return appInfo;
+            }catch(Exception e){
+            }
+        return appInfo;
     }
 
 
@@ -266,9 +274,9 @@ class GetInstalledApps extends AsyncTask<Void,Void, ArrayList<AppInfo>>{
 }
 
 class GetArchivedFilesInfo extends AsyncTask<Void,Void,ArrayList<AppInfo>>{
-    List<AppInfo> apps;
+
     OnTaskCompletedListener listener;
-    private static final String app_root = Environment.getExternalStorageDirectory()+"/AppShare";
+    String storageFolder;
 
     public GetArchivedFilesInfo(){
     }
@@ -279,49 +287,61 @@ class GetArchivedFilesInfo extends AsyncTask<Void,Void,ArrayList<AppInfo>>{
 
     @Override
     protected ArrayList<AppInfo> doInBackground(Void... params) {
-        File directory = new File(app_root);
+
         ArrayList<AppInfo> apps=
                 new ArrayList<>();
-        if(directory.isDirectory()) {
-            File[] files = directory.listFiles();
-            for (File f : files) {
-                if (f.isFile() && f.getPath().endsWith(".apk")) {
-                    PackageManager packageManager = ((Fragment)listener).getActivity().getPackageManager();
-                    PackageInfo packageInfo = packageManager.getPackageArchiveInfo(f.getPath(),0);
-                    if (Build.VERSION.SDK_INT >= 8) {
-                        packageInfo.applicationInfo.sourceDir = f.getPath();
-                        packageInfo.applicationInfo.publicSourceDir = f.getPath();
-                    }
+        try {
+            storageFolder = MainActivity.getStorageFolder();
+            File directory = new File(storageFolder);
 
-                    AppInfo appInfo =GetInstalledApps.setAppInfo(packageInfo,packageManager);
-                    appInfo.setBackupedPath(f.getPath());
-                    appInfo.setBackedUp(true);
-                    appInfo.setFilePath(f.getPath());
-                    apps.add(appInfo);
+            if (directory.isDirectory()) {
+                File[] files = directory.listFiles();
+                for (File f : files) {
+                    if (f.isFile() && f.getPath().endsWith(".apk")) {
+                        PackageManager packageManager = ((Fragment) listener).getActivity().getPackageManager();
+                        PackageInfo packageInfo = packageManager.getPackageArchiveInfo(f.getPath(), 0);
+                        if (Build.VERSION.SDK_INT >= 8) {
+                            packageInfo.applicationInfo.sourceDir = f.getPath();
+                            packageInfo.applicationInfo.publicSourceDir = f.getPath();
+                        }
+
+                        AppInfo appInfo = GetInstalledApps.setAppInfo(packageInfo, packageManager);
+                        appInfo.setBackupedPath(f.getPath());
+                        appInfo.setBackedUp(true);
+                        appInfo.setFilePath(f.getPath());
+                        apps.add(appInfo);
+                    }
                 }
             }
+        }catch(Exception ex){
+
         }
         return apps;
     }
 
     public static boolean isArchivePresent(AppInfo app,Fragment fragment){
-        File directory = new File(app_root);
-        if(directory.isDirectory()) {
-            File[] files = directory.listFiles();
-            for (File f : files) {
-                if (f.isFile() && f.getPath().endsWith(".apk")) {
-                    PackageManager packageManager = fragment.getActivity().getPackageManager();
-                    PackageInfo packageInfo = packageManager.getPackageArchiveInfo(f.getPath(),0);
-                    if(packageInfo.packageName.equalsIgnoreCase(app.getPackageName())){
-                        app.setBackedUp(true);
-                        app.setBackupedPath(f.getPath());
-                        return true;
+        try {
+            File directory = new File(MainActivity.getStorageFolder());
+            if (directory.isDirectory()) {
+                File[] files = directory.listFiles();
+                for (File f : files) {
+                    if (f.isFile() && f.getPath().endsWith(".apk")) {
+                        PackageManager packageManager = fragment.getActivity().getPackageManager();
+                        PackageInfo packageInfo = packageManager.getPackageArchiveInfo(f.getPath(), 0);
+                        if (packageInfo.packageName.equalsIgnoreCase(app.getPackageName())) {
+                            app.setBackedUp(true);
+                            app.setBackupedPath(f.getPath());
+                            return true;
+                        }
                     }
                 }
             }
+            app.setBackedUp(false);
+            app.setBackupedPath(null);
+        }catch(Exception ex){
+
         }
-        app.setBackedUp(false);
-        app.setBackupedPath(null);
+
         return false;
     }
 
@@ -329,6 +349,25 @@ class GetArchivedFilesInfo extends AsyncTask<Void,Void,ArrayList<AppInfo>>{
     protected void onPostExecute(ArrayList<AppInfo> appInfos) {
         super.onPostExecute(appInfos);
         listener.onTaskCompleted(appInfos);
+    }
+
+    public static boolean createAppDirectory(Context context){
+        try {
+            String state = Environment.getExternalStorageState();
+            if (!state.equals(Environment.MEDIA_MOUNTED) || state.equals(Environment.MEDIA_MOUNTED_READ_ONLY)) {
+                return false;
+            } else {
+                File directory = new File(Environment.getExternalStorageDirectory() + File.separator + "AppShare");
+                boolean success = true;
+                if (!directory.exists()) {
+                    success = directory.mkdir();
+                }
+
+                return success;
+            }
+        }catch(Exception ex){
+            return false;
+        }
     }
 }
 
@@ -452,10 +491,86 @@ class InstallArchiveFiles extends AsyncTask<Void,Integer,Void>{
     }
 }
 
+class MoveArchiveFiles extends AsyncTask<Void,Integer,Void>{
+    OnMoveFilesCompleteListener onMoveFilesCompleteListener;
+    ProgressDialog progressDialog;
+    String oldFolderPath, newFolderPath;
 
+    public MoveArchiveFiles(){
+    }
 
+    public MoveArchiveFiles(OnMoveFilesCompleteListener onMoveFilesCompleteListener, String oldFolderPath,String newFolderPath){
+        this.onMoveFilesCompleteListener =onMoveFilesCompleteListener;
+        this.oldFolderPath = oldFolderPath;
+        this.newFolderPath = newFolderPath;
+    }
 
+    @Override
+    protected Void doInBackground(Void... params) {
+        try {
+            File oldFolder = new File(oldFolderPath);
+            File newFolder = new File(newFolderPath);
+             if(oldFolder.exists() && oldFolder.isDirectory()){
+                 File[] files = oldFolder.listFiles();
+                 int i=0;
+                 for(File file : files){
+                     if(!file.isDirectory()){
+                         moveFile(file,newFolder);
+                     }
+                     publishProgress(i*100/files.length);
+                     i++;
+                 }
+             }
+        }
+        catch (Exception ex){
 
+        }
+        return null;
+    }
+
+    @Override
+    protected void onPreExecute() {
+        super.onPreExecute();
+        progressDialog = new ProgressDialog(((Fragment)onMoveFilesCompleteListener).getActivity());
+        progressDialog.setMessage("Moving Archive/s from old folder to new folder");
+        progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+        progressDialog.setIndeterminate(false);
+        progressDialog.setProgress(0);
+        progressDialog.setCancelable(false);
+        progressDialog.setMax(100);
+        progressDialog.show();
+    }
+
+    @Override
+    protected void onProgressUpdate(Integer... values) {
+        super.onProgressUpdate(values);
+        progressDialog.setProgress(values[0]);
+    }
+
+    @Override
+    protected void onPostExecute(Void aVoid) {
+        super.onPostExecute(aVoid);
+        onMoveFilesCompleteListener.onMoveFilesComplete();
+        progressDialog.dismiss();
+    }
+
+    private void moveFile(File file, File dir) throws IOException {
+        File newFile = new File(dir, file.getName());
+        FileChannel outputChannel = null;
+        FileChannel inputChannel = null;
+        try {
+            outputChannel = new FileOutputStream(newFile).getChannel();
+            inputChannel = new FileInputStream(file).getChannel();
+            inputChannel.transferTo(0, inputChannel.size(), outputChannel);
+            inputChannel.close();
+            file.delete();
+        } finally {
+            if (inputChannel != null) inputChannel.close();
+            if (outputChannel != null) outputChannel.close();
+        }
+
+    }
+}
 
 
 

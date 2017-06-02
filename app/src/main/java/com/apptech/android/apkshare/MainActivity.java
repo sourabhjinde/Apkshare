@@ -1,6 +1,7 @@
 package com.apptech.android.apkshare;
 
 
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.support.design.widget.TabLayout;
@@ -29,19 +30,16 @@ public class MainActivity extends AppCompatActivity implements OnArchivedCheckLi
     AppListFragment appListFragment;
     TabLayout tabLayout;
     ClickListener clickListener;
-
+    public static final String BACKUP_FOLDER_PREFERENCE = "BackupFolderPref" ;
+    public static SharedPreferences sharedPreferences;
     private static final int PERMISSION_REQUEST_CODE = 717;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-
-
         if(isStoragePermissionGranted()) {
                 setup();
         }
-
-
 }
 
 public void setup(){
@@ -94,7 +92,11 @@ public void setup(){
         }
     });
 
-
+    sharedPreferences = getSharedPreferences(BACKUP_FOLDER_PREFERENCE,MODE_PRIVATE);
+    if(sharedPreferences.getBoolean("first_run",true)){
+        sharedPreferences.edit().putBoolean("first_run",false).commit();
+        sharedPreferences.edit().putString("folderPath",ApkOperations.app_root).commit();
+    }
 }
 
     @Override
@@ -170,6 +172,24 @@ public void setup(){
             // Code for Below 23 API Oriented Device
             // Do next code
             return true;
+        }
+    }
+
+    public static String getStorageFolder(){
+        String path = sharedPreferences.getString("folderPath",null);
+        if(path==null || path.isEmpty())
+        {
+            sharedPreferences.edit().putString("folderPath",ApkOperations.app_root).commit();
+            path =ApkOperations.app_root;
+        }
+        return path;
+    }
+
+    public static void setStorageFolder(String folderPath){
+        if(folderPath!=null && !folderPath.isEmpty()) {
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putString("folderPath", folderPath);
+            editor.commit();
         }
     }
 

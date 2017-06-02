@@ -18,13 +18,16 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
+import android.widget.TextView;
+import android.widget.Toast;
 import java.util.ArrayList;
 
 /**
  * Created by S on 26/05/2017.
  */
 
-public class ArchivedFragment extends Fragment implements SearchView.OnQueryTextListener, OnTaskCompletedListener, OnTextViewClickListener, OnInstallUninstallListener {
+public class ArchivedFragment extends Fragment implements SearchView.OnQueryTextListener, OnTaskCompletedListener, OnTextViewClickListener, OnInstallUninstallListener,
+DialogChooseDirectory.Result, OnMoveFilesCompleteListener{
 
     RecyclerView recyclerView;
     static FileObserver fileObserver;
@@ -33,17 +36,17 @@ public class ArchivedFragment extends Fragment implements SearchView.OnQueryText
     ProgressBar progressBar;
     OnArchivedCheckListener onArchivedCheckListener;
     SearchView searchView;
+    TextView emptyView;
 
-    private static final String app_root = Environment.getExternalStorageDirectory() + "/AppShare";
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.applistlayout, container, false);
+        View view = inflater.inflate(R.layout.archivelayout, container, false);
         recyclerView = (RecyclerView) view.findViewById(R.id.id_recycleview);
-
         recyclerView.setLayoutManager(new LinearLayoutManager(recyclerView.getContext()));
         progressBar = (ProgressBar) view.findViewById(R.id.pbHeaderProgress);
+        emptyView = (TextView) view.findViewById(R.id.empty_view);
         new InstallUninstallReceiver().setOnInstallUninstallListener(this);
         return view;
     }
@@ -52,21 +55,16 @@ public class ArchivedFragment extends Fragment implements SearchView.OnQueryText
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         setHasOptionsMenu(true);
-        fileObserver = new FileObserver(app_root) { // set up a file observer to watch this directory on sd card
-
-            @Override
-            public void onEvent(int event, String file) {
-                if (event == FileObserver.CREATE || event == FileObserver.MOVE_SELF || event == FileObserver.MOVED_FROM || event == FileObserver.MOVED_TO
-                        || event == FileObserver.DELETE || event == FileObserver.DELETE_SELF) {
-                    new GetArchivedFilesInfo(ArchivedFragment.this).execute();
-                }
+        if (GetArchivedFilesInfo.createAppDirectory(this.getActivity())) {
+            setFileObserver(MainActivity.getStorageFolder());
+            new GetArchivedFilesInfo(this).execute();
+            adapter = new RecycleViewAdapter(apps, this);
+            recyclerView.setAdapter(adapter);
+            if (apps.isEmpty()) {
+                recyclerView.setVisibility(View.GONE);
+                emptyView.setVisibility(View.VISIBLE);
             }
-        };
-        fileObserver.startWatching();
-
-        new GetArchivedFilesInfo(this).execute();
-        adapter = new RecycleViewAdapter(apps, this);
-        recyclerView.setAdapter(adapter);
+        }
     }
 
     @Override
@@ -98,15 +96,32 @@ public class ArchivedFragment extends Fragment implements SearchView.OnQueryText
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 ArrayList<AppInfo> checkedList = adapter.getmCheckedAppList();
-                new DeleteArchivedFiles(ArchivedFragment.this.getContext(), checkedList).execute();
+                if (checkedList.isEmpty()) {
+                    Toast.makeText(ArchivedFragment.this.getActivity(), "Please select an app first", Toast.LENGTH_LONG).show();
+                } else {
+                    new DeleteArchivedFiles(ArchivedFragment.this.getContext(), checkedList).execute();
 
-                for (AppInfo appInfo : checkedList) {
-                    appInfo.setBackedUp(false);
-                    apps.remove(appInfo);
+                    for (AppInfo appInfo : checkedList) {
+                        appInfo.setBackedUp(false);
+                        apps.remove(appInfo);
+                    }
+                    adapter.notifyDataSetChanged();
+                    if (apps.isEmpty()) {
+                        recyclerView.setVisibility(View.GONE);
+                        emptyView.setVisibility(View.VISIBLE);
+                    }
+                    onArchivedCheckListener.OnArchivedCheck(checkedList);
                 }
-                adapter.notifyDataSetChanged();
-                onArchivedCheckListener.OnArchivedCheck(checkedList);
                 return false;
+            }
+        });
+
+        final MenuItem folderChoser = menu.findItem(R.id.backup_path);
+        folderChoser.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                         new DialogChooseDirectory(ArchivedFragment.this.getActivity(),ArchivedFragment.this,Environment.getExternalStorageDirectory().toString());
+                                return false;
             }
         });
 
@@ -135,6 +150,13 @@ public class ArchivedFragment extends Fragment implements SearchView.OnQueryText
             adapter.getFilter().filter(searchView.getQuery());
         } else {
             adapter.notifyDataSetChanged();
+        }
+        if (apps.isEmpty()) {
+            recyclerView.setVisibility(View.GONE);
+            emptyView.setVisibility(View.VISIBLE);
+        } else {
+            recyclerView.setVisibility(View.VISIBLE);
+            emptyView.setVisibility(View.GONE);
         }
     }
 
@@ -194,9 +216,11 @@ public class ArchivedFragment extends Fragment implements SearchView.OnQueryText
     @Override
     public void onTextViewClick(View v) {
         int id = v.getId();
+        ArrayList<AppInfo> mCheckedAppList;
         switch (id) {
             case R.id.check:
-                if (adapter.getmCheckedAppList().size() == apps.size()) {
+                mCheckedAppList = adapter.getmCheckedAppList();
+                if (mCheckedAppList.size() == apps.size()) {
                     for (AppInfo app : apps) {
                         app.setSelected(false);
 
@@ -211,15 +235,57 @@ public class ArchivedFragment extends Fragment implements SearchView.OnQueryText
                 break;
 
             case R.id.tvBackup:
-                new InstallArchiveFiles(this.getActivity(), adapter.getmCheckedAppList()).execute();
+                mCheckedAppList = adapter.getmCheckedAppList();
+                if (mCheckedAppList.isEmpty()) {
+                    Toast.makeText(this.getActivity(), "Please select an app first", Toast.LENGTH_LONG).show();
+                } else {
+                    new InstallArchiveFiles(this.getActivity(), mCheckedAppList).execute();
+                }
                 break;
 
             case R.id.tvsend:
-                new ApkOperations(this.getActivity(), adapter.getmCheckedAppList()).shareApk();
+                mCheckedAppList = adapter.getmCheckedAppList();
+                if (mCheckedAppList.isEmpty()) {
+                    Toast.makeText(this.getActivity(), "Please select an app first", Toast.LENGTH_LONG).show();
+                } else {
+                    new ApkOperations(this.getActivity(), mCheckedAppList).shareApk();
+                }
                 break;
 
             default:
                 break;
         }
+    }
+
+    @Override
+    public void onChooseDirectory(String dir) {
+        new MoveArchiveFiles(ArchivedFragment.this,MainActivity.getStorageFolder(),dir).execute();
+        MainActivity.setStorageFolder(dir);
+        Toast.makeText(this.getActivity(),"Backup path set to : "+dir,Toast.LENGTH_LONG).show();
+        setFileObserver(dir);
+
+    }
+
+    @Override
+    public void onMoveFilesComplete() {
+        new GetArchivedFilesInfo(ArchivedFragment.this).execute();
+    }
+
+    public void setFileObserver(String filePath){
+        if(fileObserver != null){
+            fileObserver.stopWatching();
+        }
+        fileObserver = new FileObserver(filePath) { // set up a file observer to watch this directory on sd card
+
+            @Override
+            public void onEvent(int event, String file) {
+                if (event == FileObserver.CREATE || event == FileObserver.MOVE_SELF || event == FileObserver.MOVED_FROM || event == FileObserver.MOVED_TO
+                        || event == FileObserver.DELETE || event == FileObserver.DELETE_SELF) {
+                    new GetArchivedFilesInfo(ArchivedFragment.this).execute();
+                }
+            }
+        };
+        fileObserver.startWatching();
+
     }
 }
