@@ -1,10 +1,9 @@
-package com.apptech.android.apkshare;
+package com.apptech.android.shareapps;
 
 
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -14,7 +13,10 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Environment;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AlertDialog;
 import android.widget.Toast;
+
+import com.daimajia.numberprogressbar.NumberProgressBar;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -22,15 +24,11 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
-import java.sql.Array;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-
-import static android.R.attr.fragment;
-
 
 /**
  * Created by S on 25/05/2017.
@@ -38,10 +36,9 @@ import static android.R.attr.fragment;
 
 public class ApkOperations extends AsyncTask<File, Integer, Void> {
 
-    private String resp;
-    ProgressDialog progressDialog;
-    static final String app_root = Environment.getExternalStorageDirectory()+"/AppShare";
-
+    NumberProgressBar progressBar;
+    static final String app_root = Environment.getExternalStorageDirectory() + "/AppShare";
+    AlertDialog dialog;
     Context context;
     List<AppInfo> apps;
     String storageFolder;
@@ -51,17 +48,13 @@ public class ApkOperations extends AsyncTask<File, Integer, Void> {
         this.apps = apps;
     }
 
-    ApkOperations(Context context)
-    {
-        this.context = context;
-    }
     @Override
     protected Void doInBackground(File... params) {
 
         File file;
         File copiedFile;
         try {
-            storageFolder =MainActivity.getStorageFolder();
+            storageFolder = MainActivity.getStorageFolder();
             copiedFile = new File(storageFolder);
             copiedFile.mkdir();
             int i = 1;
@@ -77,35 +70,29 @@ public class ApkOperations extends AsyncTask<File, Integer, Void> {
             }
 
         } catch (FileNotFoundException ex) {
-            System.out.println(ex.getMessage() + " in the specified directory.");
         } catch (IOException e) {
-            System.out.println(e.getMessage());
         }
         return null;
     }
 
     @Override
     protected void onPreExecute() {
-        progressDialog = new ProgressDialog(context);
-        progressDialog.setMessage("Extracting Apk");
-        progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-        progressDialog.setIndeterminate(false);
-        progressDialog.setProgress(0);
-        progressDialog.setCancelable(false);
-        progressDialog.setMax(100);
-        progressDialog.show();
+        dialog = ((MainActivity) context).extractAlertDialog;
+        dialog.show();
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
+        progressBar = (NumberProgressBar) ((MainActivity) context).extractAlertDialog.findViewById(R.id.number_progress_bar);
     }
 
     @Override
     protected void onPostExecute(Void aVoid) {
-        progressDialog.dismiss();
-        Toast.makeText(context,"Done successfully. Saved at " + storageFolder,Toast.LENGTH_LONG).show();
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
+        Toast.makeText(context, "Done successfully. Saved at " + storageFolder, Toast.LENGTH_LONG).show();
     }
 
 
     @Override
     protected void onProgressUpdate(Integer... val) {
-        progressDialog.setProgress(val[0]);
+        progressBar.setProgress(val[0]);
 
     }
 
@@ -136,7 +123,7 @@ public class ApkOperations extends AsyncTask<File, Integer, Void> {
 
     public void shareApk() {
 
-        ArrayList<Uri> arrayListApkFilePath= getUris();
+        ArrayList<Uri> arrayListApkFilePath = getUris();
 
         Intent intent = new Intent(Intent.ACTION_SEND_MULTIPLE);
 
@@ -148,11 +135,9 @@ public class ApkOperations extends AsyncTask<File, Integer, Void> {
                 arrayListApkFilePath.size() + " Files Via"));
     }
 
-    public ArrayList<Uri> getUris()
-    {
-        ArrayList<Uri> arrayListApkFilePath= new ArrayList<>();
-        for(AppInfo app : apps)
-        {
+    public ArrayList<Uri> getUris() {
+        ArrayList<Uri> arrayListApkFilePath = new ArrayList<>();
+        for (AppInfo app : apps) {
             arrayListApkFilePath.add(Uri.fromFile(new File(app.filePath)));
         }
 
@@ -161,7 +146,7 @@ public class ApkOperations extends AsyncTask<File, Integer, Void> {
 
 }
 
-class GetInstalledApps extends AsyncTask<Void,Void, ArrayList<AppInfo>>{
+class GetInstalledApps extends AsyncTask<Void, Void, ArrayList<AppInfo>> {
 
     ArrayList<AppInfo> apps;
     OnTaskCompletedListener listener;
@@ -170,45 +155,42 @@ class GetInstalledApps extends AsyncTask<Void,Void, ArrayList<AppInfo>>{
     private static final long MiB = 1024 * 1024;
     private static final long KiB = 1024;
 
-    GetInstalledApps(){
+    GetInstalledApps() {
 
     }
 
-    GetInstalledApps(OnTaskCompletedListener onTaskCompletedListener, boolean wantSystem){
+    GetInstalledApps(OnTaskCompletedListener onTaskCompletedListener, boolean wantSystem) {
         this.listener = onTaskCompletedListener;
         this.wantSystem = wantSystem;
     }
 
     @Override
     protected ArrayList<AppInfo> doInBackground(Void... params) {
-        apps = new ArrayList<>() ;
-        PackageManager packageManager = ((Fragment)listener).getActivity().getPackageManager();
+        apps = new ArrayList<>();
+        PackageManager packageManager = ((Fragment) listener).getActivity().getPackageManager();
         List<PackageInfo> packList = packageManager.getInstalledPackages(0);
         AppInfo appInfo;
 
-        if(wantSystem) {
+        if (wantSystem) {
             for (int i = 0; i < packList.size(); i++) {
                 PackageInfo packInfo = packList.get(i);
-                    appInfo = setAppInfo(packInfo,packageManager);
-                    appInfo.setInstalled(true);
+                appInfo = setAppInfo(packInfo, packageManager);
+                appInfo.setInstalled(true);
 
-                if (  (packInfo.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0 )
-                {
-                     appInfo.setSytem(false);
-                }else{
-                     appInfo.setSytem(true);
+                if ((packInfo.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0) {
+                    appInfo.setSytem(false);
+                } else {
+                    appInfo.setSytem(true);
                 }
                 apps.add(appInfo);
 
             }
-        }else
-        {
+        } else {
             for (int i = 0; i < packList.size(); i++) {
                 PackageInfo packInfo = packList.get(i);
 
-                if (  (packInfo.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0 )
-                {
-                    appInfo = setAppInfo(packInfo,packageManager);
+                if ((packInfo.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0) {
+                    appInfo = setAppInfo(packInfo, packageManager);
                     appInfo.setInstalled(true);
                     apps.add(appInfo);
                 }
@@ -217,25 +199,25 @@ class GetInstalledApps extends AsyncTask<Void,Void, ArrayList<AppInfo>>{
         return apps;
     }
 
-    public static AppInfo setAppInfo(PackageInfo packInfo,PackageManager packageManager){
-            AppInfo appInfo = new AppInfo();
-            try {
-                String filePath = packInfo.applicationInfo.publicSourceDir;
-                String appName = packInfo.applicationInfo.loadLabel(packageManager).toString();
-                Drawable appIcon = packInfo.applicationInfo.loadIcon(packageManager);
-                String version = packInfo.versionName;
-                String packageName = packInfo.packageName;
-                String installDate = new SimpleDateFormat("yyyy/mm/dd").format(new Date(packInfo.firstInstallTime));
-                appInfo.setAppImage(appIcon);
-                appInfo.setAppName(appName);
-                appInfo.setAppVersion(version);
-                appInfo.setFilePath(filePath);
-                appInfo.setPackageName(packageName);
-                appInfo.setDate(installDate);
-                appInfo.setSize(getFileSize(new File(filePath)));
+    public static AppInfo setAppInfo(PackageInfo packInfo, PackageManager packageManager) {
+        AppInfo appInfo = new AppInfo();
+        try {
+            String filePath = packInfo.applicationInfo.publicSourceDir;
+            String appName = packInfo.applicationInfo.loadLabel(packageManager).toString();
+            Drawable appIcon = packInfo.applicationInfo.loadIcon(packageManager);
+            String version = packInfo.versionName;
+            String packageName = packInfo.packageName;
+            String installDate = new SimpleDateFormat("yyyy/mm/dd").format(new Date(packInfo.firstInstallTime));
+            appInfo.setAppImage(appIcon);
+            appInfo.setAppName(appName);
+            appInfo.setAppVersion(version);
+            appInfo.setFilePath(filePath);
+            appInfo.setPackageName(packageName);
+            appInfo.setDate(installDate);
+            appInfo.setSize(getFileSize(new File(filePath)));
 
-            }catch(Exception e){
-            }
+        } catch (Exception e) {
+        }
         return appInfo;
     }
 
@@ -246,7 +228,7 @@ class GetInstalledApps extends AsyncTask<Void,Void, ArrayList<AppInfo>>{
         listener.onTaskCompleted(appInfos);
     }
 
-    public static boolean isPackageInstalled(String packagename,Fragment fragment) {
+    public static boolean isPackageInstalled(String packagename, Fragment fragment) {
         PackageManager packageManager = fragment.getActivity().getPackageManager();
         try {
             packageManager.getPackageInfo(packagename, 0);
@@ -273,22 +255,19 @@ class GetInstalledApps extends AsyncTask<Void,Void, ArrayList<AppInfo>>{
     }
 }
 
-class GetArchivedFilesInfo extends AsyncTask<Void,Void,ArrayList<AppInfo>>{
+class GetArchivedFilesInfo extends AsyncTask<Void, Void, ArrayList<AppInfo>> {
 
     OnTaskCompletedListener listener;
     String storageFolder;
 
-    public GetArchivedFilesInfo(){
-    }
-
-    public GetArchivedFilesInfo(OnTaskCompletedListener onTaskCompletedListener){
+    public GetArchivedFilesInfo(OnTaskCompletedListener onTaskCompletedListener) {
         this.listener = onTaskCompletedListener;
     }
 
     @Override
     protected ArrayList<AppInfo> doInBackground(Void... params) {
 
-        ArrayList<AppInfo> apps=
+        ArrayList<AppInfo> apps =
                 new ArrayList<>();
         try {
             storageFolder = MainActivity.getStorageFolder();
@@ -313,13 +292,13 @@ class GetArchivedFilesInfo extends AsyncTask<Void,Void,ArrayList<AppInfo>>{
                     }
                 }
             }
-        }catch(Exception ex){
+        } catch (Exception ex) {
 
         }
         return apps;
     }
 
-    public static boolean isArchivePresent(AppInfo app,Fragment fragment){
+    public static boolean isArchivePresent(AppInfo app, Fragment fragment) {
         try {
             File directory = new File(MainActivity.getStorageFolder());
             if (directory.isDirectory()) {
@@ -338,7 +317,7 @@ class GetArchivedFilesInfo extends AsyncTask<Void,Void,ArrayList<AppInfo>>{
             }
             app.setBackedUp(false);
             app.setBackupedPath(null);
-        }catch(Exception ex){
+        } catch (Exception ex) {
 
         }
 
@@ -351,7 +330,7 @@ class GetArchivedFilesInfo extends AsyncTask<Void,Void,ArrayList<AppInfo>>{
         listener.onTaskCompleted(appInfos);
     }
 
-    public static boolean createAppDirectory(Context context){
+    public static boolean createAppDirectory(Context context) {
         try {
             String state = Environment.getExternalStorageState();
             if (!state.equals(Environment.MEDIA_MOUNTED) || state.equals(Environment.MEDIA_MOUNTED_READ_ONLY)) {
@@ -365,29 +344,26 @@ class GetArchivedFilesInfo extends AsyncTask<Void,Void,ArrayList<AppInfo>>{
 
                 return success;
             }
-        }catch(Exception ex){
+        } catch (Exception ex) {
             return false;
         }
     }
 }
 
-class DeleteArchivedFiles extends AsyncTask<Void,Integer,Void>{
+class DeleteArchivedFiles extends AsyncTask<Void, Integer, Void> {
     ArrayList<AppInfo> apps;
     Context context;
     ProgressDialog progressDialog;
 
-    public DeleteArchivedFiles(){
-    }
-
-    public DeleteArchivedFiles(Context context, ArrayList<AppInfo> apps){
-        this.context =context;
+    public DeleteArchivedFiles(Context context, ArrayList<AppInfo> apps) {
+        this.context = context;
         this.apps = apps;
     }
 
     @Override
     protected Void doInBackground(Void... params) {
         try {
-            int i=0;
+            int i = 0;
             for (AppInfo appInfo : apps) {
                 File file = new File(appInfo.getBackupedPath());
                 if (file.exists()) {
@@ -395,10 +371,10 @@ class DeleteArchivedFiles extends AsyncTask<Void,Integer,Void>{
                 }
                 appInfo.setBackedUp(false);
                 appInfo.setBackupedPath(null);
-                publishProgress(i*100/apps.size());
+                publishProgress(i * 100 / apps.size());
                 i++;
             }
-        }catch (Exception ex){
+        } catch (Exception ex) {
 
         }
         return null;
@@ -430,23 +406,20 @@ class DeleteArchivedFiles extends AsyncTask<Void,Integer,Void>{
     }
 }
 
-class InstallArchiveFiles extends AsyncTask<Void,Integer,Void>{
+class InstallArchiveFiles extends AsyncTask<Void, Integer, Void> {
     ArrayList<AppInfo> apps;
     Context context;
     ProgressDialog progressDialog;
 
-    public InstallArchiveFiles(){
-    }
-
-    public InstallArchiveFiles(Context context, ArrayList<AppInfo> apps){
-        this.context =context;
+    public InstallArchiveFiles(Context context, ArrayList<AppInfo> apps) {
+        this.context = context;
         this.apps = apps;
     }
 
     @Override
     protected Void doInBackground(Void... params) {
         try {
-            int i=0;
+            int i = 0;
             for (AppInfo appInfo : apps) {
                 File file = new File(appInfo.getBackupedPath());
                 if (file.exists()) {
@@ -456,10 +429,10 @@ class InstallArchiveFiles extends AsyncTask<Void,Integer,Void>{
                     context.startActivity(intent);
                 }
                 appInfo.setBackedUp(true);
-                publishProgress(i*100/apps.size());
+                publishProgress(i * 100 / apps.size());
                 i++;
             }
-        }catch (Exception ex){
+        } catch (Exception ex) {
 
         }
         return null;
@@ -491,16 +464,13 @@ class InstallArchiveFiles extends AsyncTask<Void,Integer,Void>{
     }
 }
 
-class MoveArchiveFiles extends AsyncTask<Void,Integer,Void>{
+class MoveArchiveFiles extends AsyncTask<Void, Integer, Void> {
     OnMoveFilesCompleteListener onMoveFilesCompleteListener;
     ProgressDialog progressDialog;
     String oldFolderPath, newFolderPath;
 
-    public MoveArchiveFiles(){
-    }
-
-    public MoveArchiveFiles(OnMoveFilesCompleteListener onMoveFilesCompleteListener, String oldFolderPath,String newFolderPath){
-        this.onMoveFilesCompleteListener =onMoveFilesCompleteListener;
+    public MoveArchiveFiles(OnMoveFilesCompleteListener onMoveFilesCompleteListener, String oldFolderPath, String newFolderPath) {
+        this.onMoveFilesCompleteListener = onMoveFilesCompleteListener;
         this.oldFolderPath = oldFolderPath;
         this.newFolderPath = newFolderPath;
     }
@@ -510,19 +480,18 @@ class MoveArchiveFiles extends AsyncTask<Void,Integer,Void>{
         try {
             File oldFolder = new File(oldFolderPath);
             File newFolder = new File(newFolderPath);
-             if(oldFolder.exists() && oldFolder.isDirectory()){
-                 File[] files = oldFolder.listFiles();
-                 int i=0;
-                 for(File file : files){
-                     if(!file.isDirectory()){
-                         moveFile(file,newFolder);
-                     }
-                     publishProgress(i*100/files.length);
-                     i++;
-                 }
-             }
-        }
-        catch (Exception ex){
+            if (oldFolder.exists() && oldFolder.isDirectory()) {
+                File[] files = oldFolder.listFiles();
+                int i = 0;
+                for (File file : files) {
+                    if (!file.isDirectory()) {
+                        moveFile(file, newFolder);
+                    }
+                    publishProgress(i * 100 / files.length);
+                    i++;
+                }
+            }
+        } catch (Exception ex) {
 
         }
         return null;
@@ -531,7 +500,7 @@ class MoveArchiveFiles extends AsyncTask<Void,Integer,Void>{
     @Override
     protected void onPreExecute() {
         super.onPreExecute();
-        progressDialog = new ProgressDialog(((Fragment)onMoveFilesCompleteListener).getActivity());
+        progressDialog = new ProgressDialog(((Fragment) onMoveFilesCompleteListener).getActivity());
         progressDialog.setMessage("Moving Archive/s from old folder to new folder");
         progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
         progressDialog.setIndeterminate(false);

@@ -1,4 +1,4 @@
-package com.apptech.android.apkshare;
+package com.apptech.android.shareapps;
 
 import android.content.Context;
 import android.content.DialogInterface;
@@ -22,6 +22,7 @@ import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import java.util.ArrayList;
 
 /**
@@ -29,7 +30,7 @@ import java.util.ArrayList;
  */
 
 public class ArchivedFragment extends Fragment implements SearchView.OnQueryTextListener, OnTaskCompletedListener, OnTextViewClickListener, OnInstallUninstallListener,
-DialogChooseDirectory.Result, OnMoveFilesCompleteListener{
+        DialogChooseDirectory.Result, OnMoveFilesCompleteListener {
 
     RecyclerView recyclerView;
     static FileObserver fileObserver;
@@ -104,7 +105,7 @@ DialogChooseDirectory.Result, OnMoveFilesCompleteListener{
 
                     new AlertDialog.Builder(ArchivedFragment.this.getActivity())
                             .setTitle("Delete Confirm")
-                            .setMessage("Do you really want to delete "+checkedList.size()+" item(s)?")
+                            .setMessage("Do you really want to delete " + checkedList.size() + " item(s)?")
                             .setIcon(android.R.drawable.ic_dialog_alert)
                             .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
 
@@ -121,7 +122,8 @@ DialogChooseDirectory.Result, OnMoveFilesCompleteListener{
                                         emptyView.setVisibility(View.VISIBLE);
                                     }
                                     onArchivedCheckListener.OnArchivedCheck(checkedList);
-                                }})
+                                }
+                            })
                             .setNegativeButton(android.R.string.no, null).show();
 
                 }
@@ -133,8 +135,8 @@ DialogChooseDirectory.Result, OnMoveFilesCompleteListener{
         folderChoser.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                         new DialogChooseDirectory(ArchivedFragment.this.getActivity(),ArchivedFragment.this,Environment.getExternalStorageDirectory().toString());
-                                return false;
+                new DialogChooseDirectory(ArchivedFragment.this.getActivity(), ArchivedFragment.this, Environment.getExternalStorageDirectory().toString());
+                return false;
             }
         });
 
@@ -272,9 +274,9 @@ DialogChooseDirectory.Result, OnMoveFilesCompleteListener{
 
     @Override
     public void onChooseDirectory(String dir) {
-        new MoveArchiveFiles(ArchivedFragment.this,MainActivity.getStorageFolder(),dir).execute();
+        new MoveArchiveFiles(ArchivedFragment.this, MainActivity.getStorageFolder(), dir).execute();
         MainActivity.setStorageFolder(dir);
-        Toast.makeText(this.getActivity(),"Backup path set to : "+dir,Toast.LENGTH_LONG).show();
+        Toast.makeText(this.getActivity(), "Backup path set to : " + dir, Toast.LENGTH_LONG).show();
         setFileObserver(dir);
 
     }
@@ -284,8 +286,8 @@ DialogChooseDirectory.Result, OnMoveFilesCompleteListener{
         new GetArchivedFilesInfo(ArchivedFragment.this).execute();
     }
 
-    public void setFileObserver(String filePath){
-        if(fileObserver != null){
+    public void setFileObserver(String filePath) {
+        if (fileObserver != null) {
             fileObserver.stopWatching();
         }
         fileObserver = new FileObserver(filePath) { // set up a file observer to watch this directory on sd card
@@ -299,6 +301,5 @@ DialogChooseDirectory.Result, OnMoveFilesCompleteListener{
             }
         };
         fileObserver.startWatching();
-
     }
 }

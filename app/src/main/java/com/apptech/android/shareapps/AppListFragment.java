@@ -1,4 +1,4 @@
-package com.apptech.android.apkshare;
+package com.apptech.android.shareapps;
 
 
 import android.content.Intent;
@@ -33,7 +33,7 @@ import static android.app.Activity.RESULT_OK;
  * Created by S on 03/05/2017.
  */
 
-public class AppListFragment extends Fragment implements SearchView.OnQueryTextListener, OnTextViewClickListener, OnTaskCompletedListener, OnInstallUninstallListener{
+public class AppListFragment extends Fragment implements SearchView.OnQueryTextListener, OnTextViewClickListener, OnTaskCompletedListener, OnInstallUninstallListener {
 
     //convert array to list
     ArrayList<AppInfo> appslist = new ArrayList<AppInfo>();
@@ -252,7 +252,7 @@ public class AppListFragment extends Fragment implements SearchView.OnQueryTextL
             } catch (PackageManager.NameNotFoundException ex) {
             }
         }
-        //adapter.notifyDataSetChanged();
+
         if (searchView != null) {
             adapter.getFilter().filter(searchView.getQuery());
         } else {

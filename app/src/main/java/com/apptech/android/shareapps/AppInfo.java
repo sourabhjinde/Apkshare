@@ -1,8 +1,6 @@
-package com.apptech.android.apkshare;
+package com.apptech.android.shareapps;
 
 import android.graphics.drawable.Drawable;
-
-import java.util.Comparator;
 
 /**
  * Created by S on 04/05/2017.
@@ -157,19 +155,5 @@ public class AppInfo {
 
         // Compare the data members and return accordingly
         return this.packageName.equalsIgnoreCase(c.getPackageName()) && this.getAppVersion().equalsIgnoreCase(c.getAppVersion());
-    }
-}
-
-
- class PackageComparator implements Comparator{
-
-    @Override
-    public int compare(Object o1, Object o2) {
-        AppInfo appInfo_1 = (AppInfo)o1;
-        AppInfo appInfo_2 =(AppInfo)o2;
-        if(appInfo_1.packageName==appInfo_1.packageName)
-            return 0;
-        else
-            return -1;
     }
 }

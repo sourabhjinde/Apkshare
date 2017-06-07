@@ -1,4 +1,4 @@
-package com.apptech.android.apkshare;
+package com.apptech.android.shareapps;
 
 import android.view.View;
 

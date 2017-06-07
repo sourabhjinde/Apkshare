@@ -1,4 +1,4 @@
-package com.apptech.android.apkshare;
+package com.apptech.android.shareapps;
 
 import android.content.Context;
 import android.content.DialogInterface;
@@ -28,7 +28,6 @@ public class DialogChooseDirectory implements AdapterView.OnItemClickListener, D
     List<File> m_entries = new ArrayList< File >();
     File m_currentDir;
     Context m_context;
-    AlertDialog m_alertDialog;
     ListView m_list;
     Result m_result = null;
 

@@ -1,4 +1,4 @@
-package com.apptech.android.apkshare;
+package com.apptech.android.shareapps;
 
 import java.util.ArrayList;
 
@@ -7,6 +7,6 @@ import java.util.ArrayList;
  */
 
 public interface OnTaskCompletedListener {
-    public void onTaskCompleted(ArrayList<AppInfo> apps);
+    void onTaskCompleted(ArrayList<AppInfo> apps);
 }
 

@@ -1,4 +1,4 @@
-package com.apptech.android.apkshare;
+package com.apptech.android.shareapps;
 
 import java.util.ArrayList;
 
@@ -7,5 +7,5 @@ import java.util.ArrayList;
  */
 
 public interface OnArchivedCheckListener {
-    public void OnArchivedCheck(ArrayList<AppInfo> appInfos);
+    void OnArchivedCheck(ArrayList<AppInfo> appInfos);
 }

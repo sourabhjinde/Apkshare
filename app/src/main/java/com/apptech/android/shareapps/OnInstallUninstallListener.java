@@ -1,4 +1,4 @@
-package com.apptech.android.apkshare;
+package com.apptech.android.shareapps;
 
 import android.content.Intent;
 
@@ -7,5 +7,5 @@ import android.content.Intent;
  */
 
 public interface OnInstallUninstallListener {
-    public void onInstallUninstall(Intent intent);
+    void onInstallUninstall(Intent intent);
 }

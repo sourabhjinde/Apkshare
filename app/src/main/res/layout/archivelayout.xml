@@ -1,33 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/frameLayout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    >
+    android:layout_height="match_parent">
+
     <ProgressBar
         android:id="@+id/pbHeaderProgress"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:paddingTop="10dp"
         android:layout_gravity="center_horizontal"
-        android:layout_weight="2" >
-    </ProgressBar>
+        android:layout_weight="2"
+        android:paddingTop="10dp"></ProgressBar>
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/id_recycleview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="gone"
-        tools:context=".MainActivity">
-    </android.support.v7.widget.RecyclerView>
+        tools:context=".MainActivity"></android.support.v7.widget.RecyclerView>
 
     <TextView
         android:id="@+id/empty_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center"
-        android:visibility="gone"
-        android:text="No Backup available" />
+        android:text="No Backup available"
+        android:visibility="gone" />
 </FrameLayout>

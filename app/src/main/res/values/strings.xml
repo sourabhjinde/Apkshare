@@ -1,6 +1,7 @@
 <resources>
-    <string name="app_name">Apk Share</string>
+    <string name="app_name">Share Apps</string>
     <string name="title_activity_main">MainActivity</string>
     <string name="action_settings">Settings</string>
     <string name="section_format">Hello World from section: %1$d</string>
+    <string name="AdBanner">ca-app-pub-6149134339415138/1455991603</string>
 </resources>

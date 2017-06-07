@@ -1,4 +1,4 @@
-package com.apptech.android.apkshare;
+package com.apptech.android.shareapps;
 
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
