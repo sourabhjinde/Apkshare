@@ -196,7 +196,7 @@ public class MainActivity extends AppCompatActivity implements OnArchivedCheckLi
 
     public void setAppRater() {
         RateThisApp.onCreate(this);
-        RateThisApp.Config config = new RateThisApp.Config(3, 4);
+        RateThisApp.Config config = new RateThisApp.Config(3, 3);
         RateThisApp.init(config);
         RateThisApp.showRateDialogIfNeeded(this);
     }
