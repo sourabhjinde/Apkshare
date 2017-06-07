@@ -138,6 +138,16 @@ public class AppListFragment extends Fragment implements SearchView.OnQueryTextL
             }
         });
 
+        final MenuItem rateApp = menu.findItem(R.id.rateMyApp);
+        rateApp.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Intent intent = new Intent(Intent.ACTION_VIEW,Uri.parse("market://details?id="+AppListFragment.this.getActivity().getApplicationContext().getPackageName()));
+                startActivity(intent);
+                return false;
+            }
+        });
+
 
     }
 

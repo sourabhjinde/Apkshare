@@ -15,6 +15,11 @@
         android:title="Show System Apps"
         app:showAsAction="never" />
     <item
+        android:id="@+id/rateMyApp"
+        android:orderInCategory="100"
+        android:title="Please rate this app"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/delete"
         android:icon="@mipmap/ic_delete"
         android:orderInCategory="100"

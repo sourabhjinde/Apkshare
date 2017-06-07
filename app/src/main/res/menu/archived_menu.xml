@@ -13,6 +13,11 @@
         android:title="Backup Path"
         app:showAsAction="never" />
     <item
+        android:id="@+id/rateMyApp"
+        android:orderInCategory="100"
+        android:title="Please rate this app"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/archived_delete"
         android:icon="@mipmap/ic_delete"
         android:orderInCategory="100"

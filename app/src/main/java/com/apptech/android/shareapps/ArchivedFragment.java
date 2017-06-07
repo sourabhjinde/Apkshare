@@ -3,6 +3,7 @@ package com.apptech.android.shareapps;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.FileObserver;
@@ -136,6 +137,16 @@ public class ArchivedFragment extends Fragment implements SearchView.OnQueryText
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 new DialogChooseDirectory(ArchivedFragment.this.getActivity(), ArchivedFragment.this, Environment.getExternalStorageDirectory().toString());
+                return false;
+            }
+        });
+
+        final MenuItem rateApp = menu.findItem(R.id.rateMyApp);
+        rateApp.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id="+ArchivedFragment.this.getActivity().getApplicationContext().getPackageName()));
+                startActivity(intent);
                 return false;
             }
         });
